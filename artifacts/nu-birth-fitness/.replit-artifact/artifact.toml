@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "NU Birth Fitness"
+version = "1.0.0"
+id = "artifacts/nu-birth-fitness"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20329
+
+[services.development]
+run = "pnpm --filter @workspace/nu-birth-fitness run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/nu-birth-fitness", "run", "build" ]
+publicDir = "artifacts/nu-birth-fitness/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20329"
+BASE_PATH = "/"

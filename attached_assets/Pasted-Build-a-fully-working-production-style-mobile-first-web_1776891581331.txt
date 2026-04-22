@@ -1,0 +1,242 @@
+Build a fully working, production-style, mobile-first web application for the YouTube channel below.
+
+TARGET CHANNEL
+- Channel handle: @NU-BirthFitness
+- Channel URL: https://www.youtube.com/@NU-BirthFitness
+- Brand/site reference: https://www.nu-birthfitness.com/
+
+PRIMARY GOAL
+Create a polished, mobile-first content app that automatically pulls and displays all public YouTube content from this channel using official YouTube APIs and official YouTube embeds. The app must feel like a standalone fitness/wellness media app, not just a plain list of links.
+
+IMPORTANT LEGAL / TECHNICAL RULES
+- Do NOT download, rip, rehost, or locally store YouTube video files.
+- Do NOT scrape YouTube HTML as the main data source.
+- Use the official YouTube Data API v3 for metadata and the official embedded YouTube player / iframe embeds for playback.
+- Preserve YouTube attribution and channel/video links.
+- The app should sync public videos/playlists dynamically so newly published content appears without manual edits.
+
+STACK
+- React + TypeScript
+- Vite
+- Tailwind CSS
+- React Router
+- TanStack Query for API data fetching/caching
+- Zustand or Context API for lightweight app state
+- PWA support with installable manifest and service worker
+- Optional Capacitor scaffold for future Android packaging
+- Clean component architecture and production-ready folder structure
+
+APP OBJECTIVES
+1. Mobile-first design first, tablet/desktop responsive second.
+2. Pull channel metadata, branding, playlists, and all public uploaded videos.
+3. Provide a polished browsing experience with categories, search, filtering, featured content, and video detail screens.
+4. Use embedded YouTube playback inside the app.
+5. Be deployable from Replit with environment variables.
+6. Include strong error handling, loading states, empty states, and fallback UI.
+7. Include SEO/social metadata for web sharing.
+8. Include installable PWA behavior.
+
+YOUTUBE DATA FLOW
+Use the YouTube Data API in this order:
+
+STEP 1
+Resolve the channel using:
+- channels.list
+- part=snippet,contentDetails,brandingSettings,statistics
+- forHandle=@NU-BirthFitness
+
+STEP 2
+From the channel response, get:
+- channel id
+- title
+- description
+- thumbnails
+- subscriber count if public
+- uploads playlist id from contentDetails.relatedPlaylists.uploads
+
+STEP 3
+Fetch all uploaded videos using:
+- playlistItems.list
+- part=snippet,contentDetails
+- playlistId=<uploads playlist id>
+- maxResults=50
+- paginate through all pages until complete
+
+STEP 4
+Collect all video IDs and enrich them using:
+- videos.list
+- part=snippet,contentDetails,statistics,player,status
+- batch requests in chunks
+- only include videos that are embeddable and public where applicable
+
+STEP 5
+Fetch channel playlists using:
+- playlists.list
+- part=snippet,contentDetails
+- channelId=<resolved channel id>
+- paginate through all pages
+
+STEP 6
+For each playlist the user opens, fetch items with:
+- playlistItems.list
+- part=snippet,contentDetails
+- playlistId=<playlist id>
+
+ENVIRONMENT VARIABLES
+- VITE_YOUTUBE_API_KEY=your_api_key_here
+
+FEATURES TO BUILD
+
+1. APP SHELL
+- Bottom mobile navigation: Home, Videos, Playlists, Search, About
+- Sticky header with app logo/title
+- Install app banner for PWA
+- Theme based on a clean women’s fitness / wellness / transformation brand aesthetic
+- Soft but premium design, modern cards, strong spacing, rounded corners, subtle shadows
+
+2. HOME SCREEN
+- Hero section with channel branding
+- Featured / latest video section
+- Continue browsing sections:
+  - Latest Uploads
+  - Most Viewed (if data available)
+  - Playlists
+  - Transformation / Motivation style grouping if derivable from titles/descriptions
+- CTA buttons:
+  - Watch Latest
+  - Browse Programs
+  - Visit Website
+  - Subscribe on YouTube
+
+3. VIDEOS SCREEN
+- Infinite scroll or paginated grid/list of all public uploads
+- Search by title/description
+- Filter chips:
+  - All
+  - Recent
+  - Popular
+  - Short Form
+  - Long Form
+- Sort options:
+  - Newest
+  - Oldest
+  - Most viewed
+  - A-Z
+- Each video card should show:
+  - thumbnail
+  - title
+  - publish date
+  - duration
+  - short description preview
+
+4. VIDEO DETAIL SCREEN
+- Embedded YouTube player
+- Full title
+- metadata
+- expandable description
+- related videos from same channel
+- links to YouTube and channel
+- share button
+- bookmark/favorite button stored locally
+
+5. PLAYLISTS SCREEN
+- Display all channel playlists
+- Playlist cards with thumbnail, title, item count
+- Playlist detail page with embedded playback and playlist item list
+
+6. SEARCH SCREEN
+- Local search across fetched channel metadata
+- Typeahead results
+- Recent searches stored locally
+
+7. ABOUT SCREEN
+- Channel description
+- website link
+- subscribe CTA
+- simple brand story block
+- disclaimer that videos are played via YouTube embeds and remain property of their creators/platform
+
+8. FAVORITES / SAVED
+- Allow users to locally save favorite videos in browser storage
+- Add “Watch Later” local collection
+
+9. PWA
+- Installable
+- Splash/icon support
+- Offline fallback screen
+- Cache static assets responsibly
+- Do NOT try to cache YouTube video media itself
+
+10. ADMIN-FREE CONTENT SYNC
+- No CMS
+- App content should refresh from YouTube API automatically
+- Cache metadata for performance
+- Include a lightweight refresh strategy
+- Avoid unnecessary API calls
+
+SHORTS / CONTENT HANDLING
+- Attempt to classify content into short-form vs standard video using metadata such as duration and layout-friendly heuristics
+- Do not fake data
+- If a perfect classification is not possible, default to “All Videos” plus duration-based filtering
+
+UI / UX REQUIREMENTS
+- Mobile-first spacing and thumb-friendly controls
+- Fast initial load
+- Skeleton loaders
+- Graceful API failure messaging
+- Accessible color contrast
+- Smooth transitions
+- Clean typography
+- Premium app look, not template junk
+
+PROJECT STRUCTURE
+Create a clean folder structure such as:
+- src/
+  - api/
+  - components/
+  - features/
+  - hooks/
+  - pages/
+  - store/
+  - types/
+  - utils/
+  - styles/
+
+IMPLEMENTATION REQUIREMENTS
+- Strong TypeScript typing for all API responses
+- Reusable card/list/player components
+- Utility functions for:
+  - ISO8601 YouTube duration formatting
+  - number formatting
+  - date formatting
+  - pagination handling
+- Central API service layer
+- Query caching and retry strategy
+- Embeddable-only playback where appropriate
+- Robust environment variable validation
+
+DELIVERABLES
+1. Full working application code
+2. README with setup instructions
+3. .env.example
+4. PWA manifest/icons placeholders
+5. Clean comments where logic matters
+6. Production-minded error handling
+7. Replit-ready run configuration
+
+SUCCESS CRITERIA
+- App launches and looks polished on mobile
+- Channel data resolves correctly from @NU-BirthFitness
+- All public uploads can be browsed with pagination/search/filtering
+- Videos play inside official embedded player
+- Playlists work
+- App can be installed as a PWA
+- New YouTube uploads appear automatically without manual content entry
+
+DO NOT RETURN A MOCKUP ONLY
+Build the actual working application with code, routes, components, API integration, and styling.
+
+After building, also output:
+1. a short setup checklist
+2. any placeholders still needed from me
+3. any optional next-phase upgrades for Android/iOS packaging
