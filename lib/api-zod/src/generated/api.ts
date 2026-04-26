@@ -98,7 +98,11 @@ export const CreateBookingIntakeResponse = zod.object({
 });
 
 /**
- * @summary Render a result-day-0 template and email it (dev/owner tooling)
+ * Requires a valid admin session cookie. Returns 404 in production
+(`NODE_ENV === 'production'`) so the route cannot be used as an
+unauthenticated mail relay even if the cookie check is bypassed.
+
+ * @summary Render a result-day-0 template and email it (dev-only, admin-gated)
  */
 export const SendTestEmailBody = zod.object({
   to: zod.string().email(),

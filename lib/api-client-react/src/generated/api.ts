@@ -477,7 +477,11 @@ export const useCreateBookingIntake = <
 };
 
 /**
- * @summary Render a result-day-0 template and email it (dev/owner tooling)
+ * Requires a valid admin session cookie. Returns 404 in production
+(`NODE_ENV === 'production'`) so the route cannot be used as an
+unauthenticated mail relay even if the cookie check is bypassed.
+
+ * @summary Render a result-day-0 template and email it (dev-only, admin-gated)
  */
 export const getSendTestEmailUrl = () => {
   return `/api/email/test`;
@@ -540,7 +544,7 @@ export type SendTestEmailMutationBody = BodyType<SendTestEmailBody>;
 export type SendTestEmailMutationError = ErrorType<unknown>;
 
 /**
- * @summary Render a result-day-0 template and email it (dev/owner tooling)
+ * @summary Render a result-day-0 template and email it (dev-only, admin-gated)
  */
 export const useSendTestEmail = <
   TError = ErrorType<unknown>,
