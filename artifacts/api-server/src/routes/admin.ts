@@ -6,6 +6,7 @@ import {
   leads,
   leadEvents,
   quizSubmissions,
+  quizAnswers,
   bookingIntakes,
   emailSequences,
   emailLogs,
@@ -119,11 +120,25 @@ router.get("/admin/funnel/leads/:id", requireAdmin, async (req, res) => {
   const submission = lead.sessionId
     ? await db.query.quizSubmissions.findFirst({ where: eq(quizSubmissions.sessionId, lead.sessionId) })
     : null;
+  const answerRows = submission
+    ? await db
+        .select()
+        .from(quizAnswers)
+        .where(eq(quizAnswers.submissionId, submission.id))
+        .orderBy(quizAnswers.id)
+    : [];
+  // Prefer the joined quiz_answers rows so the admin always sees actual selected
+  // option keys + the bucket they scored into, even on legacy leads where the
+  // submission.answersJson blob may have stored only the per-question result type.
+  const answers: Record<string, { answerKey: string; answerType: string }> = {};
+  for (const a of answerRows) {
+    answers[a.questionKey] = { answerKey: a.answerKey, answerType: a.answerType };
+  }
   const events = await db.select().from(leadEvents).where(eq(leadEvents.leadId, id)).orderBy(desc(leadEvents.createdAt)).limit(50);
   const intakes = await db.select().from(bookingIntakes).where(eq(bookingIntakes.leadId, id)).orderBy(desc(bookingIntakes.createdAt));
   const sequences = await db.select().from(emailSequences).where(eq(emailSequences.leadId, id));
   const emails = await db.select().from(emailLogs).where(eq(emailLogs.leadId, id)).orderBy(desc(emailLogs.sentAt)).limit(50);
-  res.json({ lead, submission, events, intakes, sequences, emails });
+  res.json({ lead, submission, answers, events, intakes, sequences, emails });
 });
 
 router.post("/admin/funnel/leads/:id/mark-booked", requireAdmin, async (req, res) => {

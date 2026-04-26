@@ -90,6 +90,7 @@ export interface AdminEmailLog {
 export interface AdminLeadDetail {
   lead: AdminLead;
   submission: AdminQuizSubmission | null;
+  answers?: Record<string, { answerKey: string; answerType: string }>;
   events: AdminLeadEvent[];
   intakes: AdminBookingIntake[];
   sequences: AdminEmailSequence[];

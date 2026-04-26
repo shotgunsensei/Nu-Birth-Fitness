@@ -6,17 +6,47 @@ import { Card } from "@/components/ui/card";
 import { CheckCircle2, ArrowRight, Sparkles } from "lucide-react";
 import { useFunnelStore } from "@/funnel/store";
 import { RESULT_META, RESULT_TYPES } from "@/funnel/types";
-import { track } from "@/funnel/track";
+import { track, readUtm } from "@/funnel/track";
 import { FunnelSection, FunnelDisclaimer } from "@/funnel/components";
 
 export default function QuizLanding() {
   const [, setLocation] = useLocation();
   const reset = useFunnelStore((s) => s.reset);
   const sessionId = useFunnelStore((s) => s.sessionId);
+  const attribution = useFunnelStore((s) => s.attribution);
+  const setAttribution = useFunnelStore((s) => s.setAttribution);
 
   useEffect(() => {
     track("PageView", { page: "quiz_landing" }, { sessionId });
-  }, [sessionId]);
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const hasUtm = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"].some((k) => sp.has(k));
+    // Capture once on first arrival, or refresh if a new utm_source is present.
+    const incomingSource = sp.get("utm_source");
+    const shouldCapture =
+      !attribution.capturedAt ||
+      (incomingSource && incomingSource !== attribution.utm.utm_source);
+    if (shouldCapture) {
+      const utm: Record<string, string> = {};
+      for (const k of ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"]) {
+        const v = sp.get(k);
+        if (v) utm[k] = v;
+      }
+      // Fall back to readUtm for backward compatibility (already keyed without prefix).
+      if (!hasUtm) {
+        const legacy = readUtm();
+        for (const [k, v] of Object.entries(legacy)) {
+          if (v) utm[`utm_${k}`] = v;
+        }
+      }
+      setAttribution({
+        utm,
+        referrer: document.referrer || "",
+        landingUrl: window.location.href,
+        capturedAt: Date.now(),
+      });
+    }
+  }, [sessionId, attribution, setAttribution]);
 
   function start() {
     reset();

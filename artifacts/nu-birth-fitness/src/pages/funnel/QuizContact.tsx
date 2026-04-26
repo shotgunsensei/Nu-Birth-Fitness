@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useFunnelStore } from "@/funnel/store";
 import { funnelApi } from "@/funnel/api";
 import { RESULT_SLUGS } from "@/funnel/types";
-import { track, readUtm, detectDevice } from "@/funnel/track";
+import { track, detectDevice } from "@/funnel/track";
 import { FunnelDisclaimer, FunnelSection } from "@/funnel/components";
 
 export default function QuizContact() {
@@ -18,6 +18,8 @@ export default function QuizContact() {
   const result = useFunnelStore((s) => s.result);
   const scores = useFunnelStore((s) => s.scores);
   const answers = useFunnelStore((s) => s.answers);
+  const answerKeys = useFunnelStore((s) => s.answerKeys);
+  const attribution = useFunnelStore((s) => s.attribution);
   const setLead = useFunnelStore((s) => s.setLead);
 
   const [firstName, setFirstName] = useState("");
@@ -46,8 +48,16 @@ export default function QuizContact() {
     setSubmitting(true);
     setErr(null);
     try {
+      // Persist actual selected option keys (A/B/C/D) so admin can see what
+      // the user picked, not just the per-question result type bucket.
       const answersJson: Record<string, string> = {};
-      for (const [k, v] of Object.entries(answers)) answersJson[k] = v;
+      for (const [k, v] of Object.entries(answers)) {
+        answersJson[k] = answerKeys[k] ?? v;
+      }
+      const utmShort: Record<string, string | undefined> = {};
+      for (const [k, v] of Object.entries(attribution.utm)) {
+        utmShort[k.replace(/^utm_/, "")] = v;
+      }
       const r = await funnelApi.saveLead({
         firstName: firstName.trim(),
         email: email.trim().toLowerCase(),
@@ -57,8 +67,8 @@ export default function QuizContact() {
         sessionId,
         scoreJson: scores ?? undefined,
         answersJson,
-        utm: readUtm(),
-        referrer: typeof document !== "undefined" ? document.referrer : undefined,
+        utm: utmShort,
+        referrer: attribution.referrer || (typeof document !== "undefined" ? document.referrer : undefined),
         deviceType: detectDevice(),
         source: "quiz",
       });

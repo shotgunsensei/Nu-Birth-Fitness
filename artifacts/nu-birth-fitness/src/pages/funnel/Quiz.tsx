@@ -30,19 +30,24 @@ export default function Quiz() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const answerKeys = useFunnelStore((s) => s.answerKeys);
+
   function pick(type: ResultType, answerKey: string) {
-    setAnswer(q.key, type);
+    setAnswer(q.key, type, answerKey);
     funnelApi.recordAnswer(sessionId, q.key, answerKey, type).catch(() => {});
     track("QuizQuestionAnswered", { questionKey: q.key, answerType: type }, { sessionId });
     if (idx < total - 1) {
       setIndex(idx + 1);
     } else {
-      // Compute & complete
       const allAnswers = { ...answers, [q.key]: type };
+      const allKeys = { ...answerKeys, [q.key]: answerKey };
       const { result, scores } = scoreAnswers(allAnswers);
       setResult(result, scores);
+      // Send the selected option key (A/B/C/D), not the per-question result bucket.
       const answersJson: Record<string, string> = {};
-      for (const [k, v] of Object.entries(allAnswers)) answersJson[k] = v;
+      for (const k of Object.keys(allAnswers)) {
+        answersJson[k] = allKeys[k] ?? allAnswers[k];
+      }
       funnelApi.completeQuiz(sessionId, result, scores, answersJson).catch(() => {});
       track("QuizCompleted", { resultType: result }, { sessionId });
       setLocation("/quiz/contact");

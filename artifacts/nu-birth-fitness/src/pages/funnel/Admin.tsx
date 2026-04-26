@@ -213,11 +213,16 @@ function LeadDetail({ leadId, onChanged }: { leadId: number | null; onChanged: (
   if (isLoading || !data) {
     return <Card className="p-8 rounded-2xl text-center text-sm text-muted-foreground">Loading…</Card>;
   }
-  const { lead, submission, events, intakes, sequences, emails } = data;
+  const { lead, submission, events, intakes, sequences, emails, answers: joinedAnswers } = data;
   const tags: string[] = Array.isArray(lead.tags) ? lead.tags : [];
-  const answers: Record<string, string> = submission?.answersJson ?? {};
   const scores: Record<string, number> = submission?.scoreJson ?? {};
-  const answerEntries = Object.entries(answers);
+  const fallbackAnswers: Record<string, string> = submission?.answersJson ?? {};
+  // Prefer joined quiz_answers (authoritative option key + bucket); fall back to
+  // the flat answersJson blob for legacy leads where it wasn't joined.
+  const answerEntries: Array<[string, { answerKey: string; answerType?: string }]> = joinedAnswers
+    && Object.keys(joinedAnswers).length > 0
+    ? Object.entries(joinedAnswers)
+    : Object.entries(fallbackAnswers).map(([k, v]) => [k, { answerKey: v }] as const);
 
   async function markBooked() {
     await adminApi.markBooked(leadId!);
@@ -264,10 +269,12 @@ function LeadDetail({ leadId, onChanged }: { leadId: number | null; onChanged: (
           <p className="text-xs text-muted-foreground">No quiz submission linked.</p>
         ) : (
           <div className="space-y-1.5" data-testid="lead-answers">
-            {answerEntries.map(([qKey, aKey]) => (
+            {answerEntries.map(([qKey, a]) => (
               <div key={qKey} className="text-xs flex items-center justify-between gap-2 bg-muted/40 rounded-lg px-3 py-1.5">
                 <span className="font-medium">{qKey}</span>
-                <span className="text-muted-foreground tabular-nums">{aKey}</span>
+                <span className="text-muted-foreground tabular-nums">
+                  {a.answerKey}{a.answerType ? ` → ${a.answerType}` : ""}
+                </span>
               </div>
             ))}
             {Object.keys(scores).length > 0 && (
