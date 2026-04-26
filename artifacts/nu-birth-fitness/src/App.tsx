@@ -47,6 +47,9 @@ const FUNNEL_PATH_PREFIXES = [
   "/book/",
   "/training/",
   "/admin/funnel",
+  "/reset",
+  "/mom-quiz",
+  "/start",
 ];
 
 function isFunnelPath(p: string): boolean {
