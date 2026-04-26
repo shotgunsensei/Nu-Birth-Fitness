@@ -1,5 +1,6 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AnimatePresence } from "framer-motion";
@@ -18,7 +19,30 @@ import Favorites from "@/pages/Favorites";
 import About from "@/pages/About";
 import NotFound from "@/pages/not-found";
 
+import QuizLanding from "@/pages/funnel/QuizLanding";
+import Quiz from "@/pages/funnel/Quiz";
+import QuizContact from "@/pages/funnel/QuizContact";
+import Result from "@/pages/funnel/Result";
+import Booking from "@/pages/funnel/Booking";
+import Training from "@/pages/funnel/Training";
+import Admin from "@/pages/funnel/Admin";
+
+import { initTracking } from "@/funnel/track";
+
 const queryClient = new QueryClient();
+
+const FUNNEL_PATH_PREFIXES = [
+  "/reset-trap-quiz",
+  "/quiz",
+  "/results/",
+  "/book/",
+  "/training/",
+  "/admin/funnel",
+];
+
+function isFunnelPath(p: string): boolean {
+  return FUNNEL_PATH_PREFIXES.some((pre) => p === pre || p.startsWith(pre));
+}
 
 function Router() {
   return (
@@ -32,6 +56,13 @@ function Router() {
         <Route path="/search" component={Search} />
         <Route path="/favorites" component={Favorites} />
         <Route path="/about" component={About} />
+        <Route path="/reset-trap-quiz" component={QuizLanding} />
+        <Route path="/quiz" component={Quiz} />
+        <Route path="/quiz/contact" component={QuizContact} />
+        <Route path="/results/:slug" component={Result} />
+        <Route path="/book/:slug" component={Booking} />
+        <Route path="/training/:slug" component={Training} />
+        <Route path="/admin/funnel" component={Admin} />
         <Route component={NotFound} />
       </Switch>
     </AnimatePresence>
@@ -40,8 +71,15 @@ function Router() {
 
 function AppContent() {
   const hasKey = useYouTubeKeyCheck();
-  
-  if (!hasKey) {
+  const [location] = useLocation();
+
+  useEffect(() => {
+    initTracking();
+  }, []);
+
+  // Funnel and admin routes don't depend on the YouTube key — render them
+  // even if the YouTube setup screen would otherwise block the rest of the app.
+  if (!hasKey && !isFunnelPath(location)) {
     return <SetupScreen />;
   }
 

@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import Header from "./Header";
 import BottomNav from "./BottomNav";
 import InstallBanner from "./InstallBanner";
+import Footer from "./Footer";
 
 export default function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -11,6 +12,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       <main className="flex-1 w-full max-w-screen-xl mx-auto flex flex-col relative">
         {children}
       </main>
+      <Footer />
       <BottomNav />
     </div>
   );

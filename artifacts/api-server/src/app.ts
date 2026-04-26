@@ -1,8 +1,10 @@
 import express, { type Express } from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { startSchedulerLoop } from "./lib/scheduler";
 
 const app: Express = express();
 
@@ -26,9 +28,22 @@ app.use(
   }),
 );
 app.use(cors());
-app.use(express.json());
+app.use(cookieParser());
+// Capture the raw request bytes for webhook signature verification.
+// Provider HMAC must be computed against the exact bytes they signed,
+// not against a re-stringified copy.
+app.use(
+  express.json({
+    verify: (req, _res, buf) => {
+      (req as express.Request & { rawBody?: Buffer }).rawBody = Buffer.from(buf);
+    },
+  }),
+);
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
+
+// Kick off background scheduler for email sequences
+startSchedulerLoop();
 
 export default app;

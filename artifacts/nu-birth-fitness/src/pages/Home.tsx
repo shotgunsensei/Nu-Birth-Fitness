@@ -7,6 +7,8 @@ import VideoRail from "@/components/video/VideoRail";
 import PlaylistCard from "@/components/playlist/PlaylistCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
+import { Sparkles, ArrowRight } from "lucide-react";
+import { track } from "@/funnel/track";
 
 export default function Home() {
   const { data: channel, isLoading: isChannelLoading } = useChannel();
@@ -69,22 +71,52 @@ export default function Home() {
           </p>
           
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
+              className="rounded-full"
+              onClick={() => {
+                track("HomeCTA_Clicked", { position: "hero" });
+                setLocation("/reset-trap-quiz");
+              }}
+              data-testid="button-home-quiz"
+            >
+              <Sparkles className="w-4 h-4" /> Take the Reset Trap Quiz
+            </Button>
+            <Button
+              variant="secondary"
+              size="lg"
               className="rounded-full"
               onClick={() => setLocation(featuredVideo ? `/videos/${featuredVideo.id}` : "/videos")}
             >
               Watch Latest
             </Button>
-            <Button 
-              variant="secondary" 
-              size="lg" 
-              className="rounded-full"
-              onClick={() => setLocation("/playlists")}
-            >
-              Browse Programs
-            </Button>
           </div>
+        </div>
+      </div>
+
+      {/* Quiz CTA banner — top of page */}
+      <div className="px-4 md:px-6 mt-6">
+        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div>
+            <div className="text-xs font-medium uppercase tracking-wide text-primary mb-1">Free 2-minute quiz</div>
+            <h3 className="font-serif font-semibold text-lg sm:text-xl">
+              Find out which Mom Reset Type you are
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Personalized result + a clear next step for your body, energy, and confidence.
+            </p>
+          </div>
+          <Button
+            size="lg"
+            className="rounded-full shrink-0"
+            onClick={() => {
+              track("HomeCTA_Clicked", { position: "top_banner" });
+              setLocation("/reset-trap-quiz");
+            }}
+            data-testid="button-home-quiz-top"
+          >
+            Start the Quiz <ArrowRight className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 
@@ -154,6 +186,30 @@ export default function Home() {
           ))}
         </VideoRail>
       )}
+
+      {/* Bottom Quiz CTA */}
+      <div className="px-4 md:px-6 mt-10">
+        <div className="bg-card border border-card-border rounded-2xl p-6 sm:p-8 text-center">
+          <Sparkles className="w-6 h-6 text-primary mx-auto mb-2" />
+          <h3 className="font-serif font-semibold text-xl sm:text-2xl mb-2">
+            Ready for a reset that actually sticks?
+          </h3>
+          <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto mb-5">
+            Take the 2-minute Reset Trap Quiz and find out which mom pattern is keeping you stuck.
+          </p>
+          <Button
+            size="lg"
+            className="rounded-full"
+            onClick={() => {
+              track("HomeCTA_Clicked", { position: "bottom_banner" });
+              setLocation("/reset-trap-quiz");
+            }}
+            data-testid="button-home-quiz-bottom"
+          >
+            Take the Reset Trap Quiz <ArrowRight className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
     </motion.div>
   );
 }
