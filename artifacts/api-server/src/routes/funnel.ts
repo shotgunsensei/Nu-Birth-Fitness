@@ -25,6 +25,25 @@ import { startSequenceForLead, haltSequencesForLead } from "../lib/scheduler";
 import { env } from "../lib/env";
 import { logger } from "../lib/logger";
 
+// Extracts a 64-char hex sha256 digest from common signature header formats:
+//   - bare hex                            -> "abc123..."
+//   - GitHub-style scheme=hex             -> "sha256=abc123..."
+//   - Stripe-style timestamped pairs      -> "t=12345,v1=abc123..."
+// Returns "" when no valid candidate is found so the caller fails closed.
+function extractHexSignature(header: string): string {
+  if (!header) return "";
+  const trimmed = header.trim();
+  const isHex64 = (s: string) => /^[a-f0-9]{64}$/i.test(s);
+  if (isHex64(trimmed)) return trimmed.toLowerCase();
+  for (const part of trimmed.split(",")) {
+    const eq = part.indexOf("=");
+    if (eq < 0) continue;
+    const value = part.slice(eq + 1).trim();
+    if (isHex64(value)) return value.toLowerCase();
+  }
+  return "";
+}
+
 const router: IRouter = Router();
 
 const ResultEnum = z.enum(RESULT_TYPES);
@@ -296,14 +315,18 @@ router.post("/webhooks/booking", async (req, res) => {
   }
   // Verify signature when BOOKING_WEBHOOK_SECRET is configured.
   // Provider sends `x-booking-signature: <sha256-hex>` of the raw request bytes.
+  // We accept either the bare hex digest or common prefixed formats such as
+  // `sha256=<hex>` (GitHub-style) and `t=...,v1=<hex>` (Stripe-style) to
+  // reduce integration friction with the variety of providers in the wild.
   // When the secret is unset (dev only) we accept the call but log a warning.
   if (env.bookingWebhookSecret) {
-    const provided = (req.headers["x-booking-signature"] || req.headers["x-webhook-signature"] || "").toString();
+    const rawHeader = (req.headers["x-booking-signature"] || req.headers["x-webhook-signature"] || "").toString().trim();
+    const provided = extractHexSignature(rawHeader);
     const raw = (req as typeof req & { rawBody?: Buffer }).rawBody ?? Buffer.from(JSON.stringify(req.body ?? {}));
     const expected = crypto.createHmac("sha256", env.bookingWebhookSecret).update(raw).digest("hex");
-    const a = Buffer.from(provided);
-    const b = Buffer.from(expected);
-    const ok = a.length === b.length && crypto.timingSafeEqual(a, b);
+    const a = Buffer.from(provided, "utf8");
+    const b = Buffer.from(expected, "utf8");
+    const ok = provided.length > 0 && a.length === b.length && crypto.timingSafeEqual(a, b);
     if (!ok) {
       logger.warn({ ip: req.ip }, "[funnel] booking webhook signature mismatch");
       res.status(401).json({ error: "Invalid signature" });
