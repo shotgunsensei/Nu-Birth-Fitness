@@ -7,7 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { adminApi } from "@/funnel/api";
+import {
+  adminApi,
+  type AdminLead,
+  type AdminLeadEvent,
+  type AdminBookingIntake,
+  type AdminEmailSequence,
+  type AdminEmailLog,
+} from "@/funnel/api";
 import { RESULT_META, type ResultType } from "@/funnel/types";
 
 export default function Admin() {
@@ -25,7 +32,7 @@ export default function Admin() {
       await adminApi.login(password);
       setPassword("");
       qc.invalidateQueries({ queryKey: ["admin-me"] });
-    } catch (e: any) {
+    } catch {
       setLoginErr("Invalid password.");
     }
   }
@@ -147,7 +154,7 @@ function Dashboard({ onLogout, selected, setSelected }: { onLogout: () => void; 
             <span className="text-xs text-muted-foreground">{leadsQ.data?.leads?.length ?? 0}</span>
           </div>
           <div className="max-h-[600px] overflow-y-auto divide-y divide-border">
-            {(leadsQ.data?.leads ?? []).map((l: any) => (
+            {(leadsQ.data?.leads ?? []).map((l: AdminLead) => (
               <button
                 key={l.id}
                 onClick={() => setSelected(l.id)}
@@ -162,7 +169,7 @@ function Dashboard({ onLogout, selected, setSelected }: { onLogout: () => void; 
                   <div className="text-xs text-muted-foreground truncate">{l.email}</div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="text-xs text-muted-foreground">{RESULT_META[l.resultType as ResultType]?.label ?? l.resultType}</div>
+                  <div className="text-xs text-muted-foreground">{RESULT_META[l.resultType]?.label ?? l.resultType}</div>
                   <div className="text-[10px] text-muted-foreground">{new Date(l.createdAt).toLocaleDateString()}</div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
@@ -207,8 +214,8 @@ function LeadDetail({ leadId, onChanged }: { leadId: number | null; onChanged: (
   }
   const { lead, submission, events, intakes, sequences, emails } = data;
   const tags: string[] = Array.isArray(lead.tags) ? lead.tags : [];
-  const answers: Record<string, string> = (submission?.answersJson ?? {}) as Record<string, string>;
-  const scores: Record<string, number> = (submission?.scoreJson ?? {}) as Record<string, number>;
+  const answers: Record<string, string> = submission?.answersJson ?? {};
+  const scores: Record<string, number> = submission?.scoreJson ?? {};
   const answerEntries = Object.entries(answers);
 
   async function markBooked() {
@@ -228,7 +235,7 @@ function LeadDetail({ leadId, onChanged }: { leadId: number | null; onChanged: (
           <div className="text-right">
             <Badge variant={lead.status === "booked" ? "default" : "secondary"}>{lead.status}</Badge>
             <div className="text-xs text-muted-foreground mt-1">
-              {RESULT_META[lead.resultType as ResultType]?.label ?? lead.resultType}
+              {RESULT_META[lead.resultType]?.label ?? lead.resultType}
             </div>
           </div>
         </div>
@@ -275,7 +282,7 @@ function LeadDetail({ leadId, onChanged }: { leadId: number | null; onChanged: (
         {intakes.length === 0 ? (
           <p className="text-xs text-muted-foreground">None yet.</p>
         ) : (
-          intakes.map((i: any) => (
+          intakes.map((i: AdminBookingIntake) => (
             <div key={i.id} className="text-xs space-y-1 bg-muted/40 rounded-lg p-3">
               {i.biggestStruggle && <div><b>Struggle:</b> {i.biggestStruggle}</div>}
               {i.goal90Days && <div><b>Goal:</b> {i.goal90Days}</div>}
@@ -294,7 +301,7 @@ function LeadDetail({ leadId, onChanged }: { leadId: number | null; onChanged: (
         {sequences.length === 0 ? (
           <p className="text-xs text-muted-foreground">None.</p>
         ) : (
-          sequences.map((s: any) => (
+          sequences.map((s: AdminEmailSequence) => (
             <div key={s.id} className="text-xs flex items-center justify-between bg-muted/40 rounded-lg px-3 py-2">
               <span>{s.sequenceType}</span>
               <span>step {s.currentStep}/{s.totalSteps} • {s.status}</span>
@@ -307,7 +314,7 @@ function LeadDetail({ leadId, onChanged }: { leadId: number | null; onChanged: (
         {emails.length === 0 ? (
           <p className="text-xs text-muted-foreground">No emails yet.</p>
         ) : (
-          emails.map((e: any) => (
+          emails.map((e: AdminEmailLog) => (
             <div key={e.id} className="text-xs bg-muted/40 rounded-lg px-3 py-2">
               <div className="font-medium truncate">{e.subject}</div>
               <div className="text-muted-foreground">
@@ -319,7 +326,7 @@ function LeadDetail({ leadId, onChanged }: { leadId: number | null; onChanged: (
       </Section>
 
       <Section title="Recent events">
-        {events.slice(0, 20).map((ev: any) => (
+        {events.slice(0, 20).map((ev: AdminLeadEvent) => (
           <div key={ev.id} className="text-xs flex items-center justify-between gap-2 bg-muted/40 rounded-lg px-3 py-1.5">
             <span className="font-medium">{ev.eventName}</span>
             <span className="text-muted-foreground">{new Date(ev.createdAt).toLocaleString()}</span>

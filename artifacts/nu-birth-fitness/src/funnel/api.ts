@@ -30,6 +30,101 @@ export interface FunnelSettings {
   trainingVideoUrl: string | null;
 }
 
+export interface AdminLead {
+  id: number;
+  firstName: string;
+  email: string;
+  phone: string | null;
+  resultType: ResultType;
+  status: string;
+  bookedAt: string | null;
+  unsubscribed: boolean;
+  createdAt: string;
+  tags?: string[] | null;
+  sessionId?: string | null;
+}
+
+export interface AdminQuizSubmission {
+  id: number;
+  sessionId: string;
+  resultType: ResultType;
+  scoreJson: Record<string, number>;
+  answersJson: Record<string, string>;
+  completedAt: string | null;
+}
+
+export interface AdminLeadEvent {
+  id: number;
+  eventName: string;
+  payload: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface AdminBookingIntake {
+  id: number;
+  biggestStruggle?: string | null;
+  goal90Days?: string | null;
+  triedBefore?: string | null;
+  knockedOff?: string | null;
+  howSoon?: string | null;
+  openToCoaching?: string | null;
+  bestPhone?: string | null;
+  bestTime?: string | null;
+}
+
+export interface AdminEmailSequence {
+  id: number;
+  sequenceType: string;
+  currentStep: number;
+  totalSteps: number;
+  status: string;
+}
+
+export interface AdminEmailLog {
+  id: number;
+  subject: string;
+  status: string;
+  sentAt: string;
+}
+
+export interface AdminLeadDetail {
+  lead: AdminLead;
+  submission: AdminQuizSubmission | null;
+  events: AdminLeadEvent[];
+  intakes: AdminBookingIntake[];
+  sequences: AdminEmailSequence[];
+  emails: AdminEmailLog[];
+}
+
+export interface AdminStats {
+  totals: {
+    quizStarts?: number;
+    quizCompletions?: number;
+    leadsCaptured?: number;
+    bookCtaClicks?: number;
+    trainingClicks?: number;
+    trainingViews?: number;
+    intakeCompleted?: number;
+    calendarOpened?: number;
+    bookedCalls?: number;
+    resultViewed?: number;
+    conversionRate?: number;
+  };
+  breakdown: { resultType: ResultType; count: number }[];
+}
+
+export interface AdminSettingsBundle {
+  overrides: Record<string, string>;
+  effective: {
+    bookingUrl: string;
+    publicSiteUrl: string;
+    trainingVideoUrl: string;
+    ownerEmail: string;
+    mailingAddress: string;
+    resultVideos: Record<string, string>;
+  };
+}
+
 export const funnelApi = {
   startQuiz: (sessionId: string) => jpost("/quiz/start", { sessionId }),
   recordAnswer: (sessionId: string, questionKey: string, answerKey: string, answerType: ResultType) =>
@@ -71,35 +166,12 @@ export const adminApi = {
   login: (password: string) => jpost<{ ok: boolean }>("/admin/funnel/login", { password }),
   logout: () => jpost("/admin/funnel/logout", {}),
   me: () => jget<{ authenticated: boolean; configured: boolean }>("/admin/funnel/me"),
-  stats: () =>
-    jget<{
-      totals: Record<string, number>;
-      breakdown: { resultType: string; count: number }[];
-    }>("/admin/funnel/stats"),
-  leads: (limit = 100) => jget<{ leads: any[] }>(`/admin/funnel/leads?limit=${limit}`),
-  lead: (id: number) =>
-    jget<{
-      lead: any;
-      submission: any;
-      events: any[];
-      intakes: any[];
-      sequences: any[];
-      emails: any[];
-    }>(`/admin/funnel/leads/${id}`),
+  stats: () => jget<AdminStats>("/admin/funnel/stats"),
+  leads: (limit = 100) => jget<{ leads: AdminLead[] }>(`/admin/funnel/leads?limit=${limit}`),
+  lead: (id: number) => jget<AdminLeadDetail>(`/admin/funnel/leads/${id}`),
   markBooked: (id: number) => jpost(`/admin/funnel/leads/${id}/mark-booked`, {}),
   exportUrl: () => `/api/admin/funnel/export.csv`,
-  settings: () =>
-    jget<{
-      overrides: Record<string, string>;
-      effective: {
-        bookingUrl: string;
-        publicSiteUrl: string;
-        trainingVideoUrl: string;
-        ownerEmail: string;
-        mailingAddress: string;
-        resultVideos: Record<string, string>;
-      };
-    }>("/admin/funnel/settings"),
+  settings: () => jget<AdminSettingsBundle>("/admin/funnel/settings"),
   putSettings: (settings: Record<string, string>) =>
     fetch("/api/admin/funnel/settings", {
       method: "PUT",
