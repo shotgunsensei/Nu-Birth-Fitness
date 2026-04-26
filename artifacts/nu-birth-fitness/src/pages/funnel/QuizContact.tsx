@@ -65,8 +65,9 @@ export default function QuizContact() {
       setLead(firstName.trim(), email.trim().toLowerCase());
       track("LeadCaptured", { resultType: result }, { sessionId, leadId: r.leadId });
       setLocation(`/results/${RESULT_SLUGS[result]}`);
-    } catch (e: any) {
-      setErr(e?.message || "Failed to save. Please try again.");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Failed to save. Please try again.";
+      setErr(msg);
       setSubmitting(false);
     }
   }

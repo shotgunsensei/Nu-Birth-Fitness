@@ -127,6 +127,7 @@ function Dashboard({ onLogout, selected, setSelected }: { onLogout: () => void; 
         <Stat label="Leads Captured" value={totals.leadsCaptured ?? 0} />
         <Stat label="Booked Calls" value={totals.bookedCalls ?? 0} highlight />
         <Stat label="Book CTA Clicks" value={totals.bookCtaClicks ?? 0} />
+        <Stat label="Training Clicks" value={totals.trainingClicks ?? 0} />
         <Stat label="Training Views" value={totals.trainingViews ?? 0} />
         <Stat label="Intake Completed" value={totals.intakeCompleted ?? 0} />
         <Stat label="Conversion" value={`${Math.round((totals.conversionRate ?? 0) * 100)}%`} />
