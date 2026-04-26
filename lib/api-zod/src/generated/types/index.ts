@@ -7,6 +7,7 @@
  */
 
 export * from "./adminLeadDetail";
+export * from "./adminLeadDetailAnswers";
 export * from "./adminLeadDetailEmailsItem";
 export * from "./adminLeadDetailEventsItem";
 export * from "./adminLeadDetailEventsItemPayload";

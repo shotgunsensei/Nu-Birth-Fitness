@@ -119,6 +119,21 @@ export type AdminLeadDetailSubmission = {
   [key: string]: unknown;
 } | null;
 
+/**
+ * Authoritative per-question answers joined from funnel_quiz_answers,
+keyed by questionKey (Q1..Q9). Preferred over submission.answersJson
+because it carries both the option key the user selected and the
+scoring bucket that key contributed to.
+
+ */
+export type AdminLeadDetailAnswers = {
+  [key: string]: {
+    /** Selected option key, one of A/B/C/D. */
+    answerKey: string;
+    answerType: ResultType;
+  };
+};
+
 export type AdminLeadDetailEventsItemPayload = {
   [key: string]: unknown;
 } | null;
@@ -153,6 +168,12 @@ export type AdminLeadDetailEmailsItem = {
 export interface AdminLeadDetail {
   lead: Lead;
   submission?: AdminLeadDetailSubmission;
+  /** Authoritative per-question answers joined from funnel_quiz_answers,
+keyed by questionKey (Q1..Q9). Preferred over submission.answersJson
+because it carries both the option key the user selected and the
+scoring bucket that key contributed to.
+ */
+  answers?: AdminLeadDetailAnswers;
   events: AdminLeadDetailEventsItem[];
   intakes: AdminLeadDetailIntakesItem[];
   sequences: AdminLeadDetailSequencesItem[];

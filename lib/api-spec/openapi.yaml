@@ -569,6 +569,22 @@ components:
               type: object
               additionalProperties: { type: string }
             completedAt: { type: string, format: date-time, nullable: true }
+        answers:
+          type: object
+          description: |
+            Authoritative per-question answers joined from funnel_quiz_answers,
+            keyed by questionKey (Q1..Q9). Preferred over submission.answersJson
+            because it carries both the option key the user selected and the
+            scoring bucket that key contributed to.
+          additionalProperties:
+            type: object
+            required: [answerKey, answerType]
+            properties:
+              answerKey:
+                type: string
+                description: Selected option key, one of A/B/C/D.
+              answerType:
+                $ref: "#/components/schemas/ResultType"
         events:
           type: array
           items:

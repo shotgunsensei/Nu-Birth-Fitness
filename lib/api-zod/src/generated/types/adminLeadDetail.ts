@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { AdminLeadDetailAnswers } from "./adminLeadDetailAnswers";
 import type { AdminLeadDetailEmailsItem } from "./adminLeadDetailEmailsItem";
 import type { AdminLeadDetailEventsItem } from "./adminLeadDetailEventsItem";
 import type { AdminLeadDetailIntakesItem } from "./adminLeadDetailIntakesItem";
@@ -15,6 +16,12 @@ import type { Lead } from "./lead";
 export interface AdminLeadDetail {
   lead: Lead;
   submission?: AdminLeadDetailSubmission;
+  /** Authoritative per-question answers joined from funnel_quiz_answers,
+keyed by questionKey (Q1..Q9). Preferred over submission.answersJson
+because it carries both the option key the user selected and the
+scoring bucket that key contributed to.
+ */
+  answers?: AdminLeadDetailAnswers;
   events: AdminLeadDetailEventsItem[];
   intakes: AdminLeadDetailIntakesItem[];
   sequences: AdminLeadDetailSequencesItem[];

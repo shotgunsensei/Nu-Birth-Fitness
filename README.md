@@ -67,7 +67,7 @@ See `.env.example`. Required for full funnel:
 | `DATABASE_URL` | PostgreSQL connection string |
 | `SESSION_SECRET` | Signs admin auth + unsubscribe tokens |
 | `ADMIN_PASSWORD` | Unlocks `/admin/funnel` |
-| `BOOKING_WEBHOOK_SECRET` | HMAC secret for `POST /api/funnel/booking-webhook` |
+| `BOOKING_WEBHOOK_SECRET` | HMAC secret for `POST /api/webhooks/booking` (fail-closed in production when unset) |
 | `RESEND_API_KEY` (or `MAIL_DEV=1`) | Email send provider; in dev unset → emails log to console |
 | `VITE_GA4_MEASUREMENT_ID`, `VITE_META_PIXEL_ID` | Optional analytics IDs |
 | `VITE_YOUTUBE_API_KEY` | Existing YouTube content for the PWA |

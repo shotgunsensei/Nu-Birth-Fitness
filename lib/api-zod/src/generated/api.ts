@@ -331,6 +331,25 @@ export const AdminLeadDetailResponse = zod.object({
       completedAt: zod.coerce.date().nullish(),
     })
     .nullish(),
+  answers: zod
+    .record(
+      zod.string(),
+      zod.object({
+        answerKey: zod
+          .string()
+          .describe("Selected option key, one of A\/B\/C\/D."),
+        answerType: zod.enum([
+          "all_or_nothing",
+          "stuck_loop",
+          "overwhelmed",
+          "lost_herself",
+        ]),
+      }),
+    )
+    .optional()
+    .describe(
+      "Authoritative per-question answers joined from funnel_quiz_answers,\nkeyed by questionKey (Q1..Q9). Preferred over submission.answersJson\nbecause it carries both the option key the user selected and the\nscoring bucket that key contributed to.\n",
+    ),
   events: zod.array(
     zod.object({
       id: zod.number().optional(),
