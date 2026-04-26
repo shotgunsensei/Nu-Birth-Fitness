@@ -54,6 +54,16 @@ The `/admin/funnel` dashboard is intentionally a mix of two data sources, depend
 
 Event-derived counters reflect every fire (including duplicates from re-renders); booked-call counters reflect distinct leads. Treat them accordingly when reading the dashboard.
 
+### Repeat lead captures
+
+`POST /api/leads` is **idempotent on email**. If a known email retakes the
+quiz, the existing `funnel_leads` row is updated in place (new result type,
+fresh attribution, latest tags) — but the nurture sequence is *not* restarted
+and a duplicate immediate result email is *not* re-sent. This avoids spamming
+known contacts and keeps Resend quota under control. If a returning lead has
+booked, they stay booked. If the owner wants to re-engage a stalled lead, do
+it from the admin dashboard rather than relying on quiz re-submission.
+
 ## Database
 
 Drizzle with `pnpm --filter @workspace/db run db:push --force` (no checked-in migrations — push-only). The API server seeds default email templates on boot if `funnel_email_messages` is empty.
