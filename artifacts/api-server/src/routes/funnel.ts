@@ -152,6 +152,10 @@ router.post("/leads", async (req, res) => {
   const existing = await db.query.leads.findFirst({ where: eq(leads.email, b.email) });
   let leadId: number;
   if (existing) {
+    // Merge tags: keep historical tags (incl. "booked_call") and ensure the
+    // current result_type is present so the admin filter chips reflect every
+    // bucket this contact has fallen into across re-takes.
+    const mergedTags = Array.from(new Set([...(existing.tags ?? []), b.resultType]));
     await db
       .update(leads)
       .set({
@@ -159,6 +163,7 @@ router.post("/leads", async (req, res) => {
         phone: b.phone ?? existing.phone,
         consent: b.consent || existing.consent,
         resultType: b.resultType,
+        tags: mergedTags,
         utmSource: b.utm?.source ?? existing.utmSource,
         utmMedium: b.utm?.medium ?? existing.utmMedium,
         utmCampaign: b.utm?.campaign ?? existing.utmCampaign,

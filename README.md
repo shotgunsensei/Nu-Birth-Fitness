@@ -32,7 +32,7 @@ lib/
 
 End-to-end flow: **9-question quiz → 4 mom types → lead capture → result page (training + booking CTAs) → 11-step result email nurture chained into a 5-day Mom Reset sequence**.
 
-- Schema lives in `lib/db/src/schema/funnel.ts` (`funnel_quiz_sessions`, `funnel_quiz_submissions`, `funnel_leads`, `funnel_lead_events`, `funnel_booking_intakes`, `funnel_email_sequences`, `funnel_email_messages`, `funnel_email_logs`, `funnel_settings`).
+- Schema lives in `lib/db/src/schema/funnel.ts` (`funnel_quiz_submissions`, `funnel_quiz_answers`, `funnel_leads`, `funnel_lead_events`, `funnel_booking_intakes`, `funnel_email_sequences`, `funnel_email_messages`, `funnel_email_logs`, `funnel_settings`).
 - Email templates are seeded from code into `funnel_email_messages` on first boot. The scheduler renders from those DB rows (with code-template fallback) so the owner can edit copy without a code change.
 - Tracking: GA4, Meta Pixel, and an internal `funnel_lead_events` log all receive each event (`PageView`, `QuizStarted`, `QuizQuestionAnswered`, `QuizCompleted`, `LeadCaptured`, `ResultViewed`, `BookCTA_Clicked`, `BookedCall`, `TrainingCTA_Clicked`, `TrainingViewed`, `IntakeCompleted`, `CalendarOpened`, `HomeCTA_Clicked`, `HeaderCTA_Clicked`).
 - Admin dashboard at `/admin/funnel` is gated by the `ADMIN_PASSWORD` env var (returns "Admin not configured" until set). Surfaces totals, per-type breakdowns, lead detail with quiz answers + tags + intakes + emails, mark-booked, CSV export, and editable settings (booking URL, training video URL, per-result video URLs, etc.).
