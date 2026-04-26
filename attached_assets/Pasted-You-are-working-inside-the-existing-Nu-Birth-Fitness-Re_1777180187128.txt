@@ -1,0 +1,581 @@
+You are working inside the existing Nu-Birth Fitness Replit project.
+
+DO NOT rebuild the app from scratch unless absolutely required.
+DO NOT replace the current homepage, branding, navigation, layout system, or existing pages.
+Your first job is to inspect the current project structure, routes, components, styling system, database setup, and deployment assumptions, then integrate the new Reset Trap Quiz funnel smoothly into the existing Nu-Birth Fitness site.
+
+Project goal:
+Add a high-converting quiz-to-booking funnel for busy moms that works as a front-end lead capture, segmentation, nurture, and booking system.
+
+The funnel must feel native to the current revised Nu-Birth Fitness site at:
+https://nu-birth-fitness.replit.app
+
+The finished result should look like it belongs inside the existing site, not like a bolted-on Typeform clone.
+
+Before making changes:
+1. Inspect the current file structure.
+2. Identify whether the project uses React, Vite, Express, Tailwind, shadcn, Supabase, PostgreSQL, Prisma, Drizzle, or another stack.
+3. Reuse the existing design system, typography, buttons, layout wrappers, header, footer, colors, and CTA styling wherever possible.
+4. Reuse existing booking links, contact forms, video areas, hero patterns, and brand language if already present.
+5. Do not duplicate dependencies if the project already has working alternatives.
+6. Add a short implementation summary in the README or a new FUNNEL_NOTES.md explaining exactly what was changed.
+
+Primary conversion strategy:
+The existing Nu-Birth Fitness site should become the authority/brand site, while the new quiz becomes the main conversion engine for ads, YouTube links, social bios, pinned comments, email links, and homepage CTAs.
+
+Add the funnel as a dedicated flow:
+
+/reset-trap-quiz
+/quiz
+/quiz/contact
+/results/all-or-nothing
+/results/stuck-in-the-loop
+/results/overwhelmed
+/results/lost-herself
+/training/:resultType
+/book/:resultType
+/admin/funnel
+
+Also add graceful redirects:
+/reset → /reset-trap-quiz
+/mom-quiz → /reset-trap-quiz
+/start → /reset-trap-quiz
+
+Site integration requirements:
+1. Add a prominent quiz CTA to the existing homepage without disrupting the current page.
+2. Add a CTA section near the top of the homepage:
+   “Take the 2-Minute Reset Trap Quiz”
+3. Add a CTA section near the bottom of the homepage:
+   “Not sure what’s keeping you stuck? Find your Mom Reset Type.”
+4. Add a nav/header CTA if the current design supports it:
+   “Take the Quiz”
+5. Add footer link:
+   “Reset Trap Quiz”
+6. Any existing “Free Plan,” “Show Me The Plan,” “Book a Call,” or “Get Started” CTAs should either:
+   - remain unchanged if they are already important, or
+   - gain an alternate secondary CTA pointing to the quiz.
+7. Do not remove existing sales sections. The quiz should enhance the funnel, not erase the current site.
+
+Core funnel:
+Ad / YouTube / social / website CTA
+→ Reset Trap Quiz landing page
+→ 2-minute quiz
+→ lead capture gate
+→ personalized result page
+→ two-path decision:
+   A. “I’m Ready Now — Book My Reset Call”
+   B. “I’m Not Ready Yet — Watch the 4-Minute Reset Training”
+→ result-specific 10-day email nurture if they do not book
+→ 5-Day Mom Reset sequence if they still do not book
+→ stop nurture once booked
+
+Quiz concept:
+The quiz identifies one of 4 mom types:
+
+1. All-or-Nothing Mom
+2. Stuck-in-the-Loop Mom
+3. Overwhelmed Mom
+4. Lost-Herself Mom
+
+Tone:
+Warm, direct, emotionally intelligent, confident, mom-life aware.
+Do not shame the visitor.
+Do not overpromise.
+Do not guarantee weight loss.
+Use “results vary” language.
+
+Main landing page:
+Route: /reset-trap-quiz
+
+Use this structure:
+
+Hero headline:
+“What’s Actually Keeping You Stuck?”
+
+Subheadline:
+“Take the 2-minute Reset Trap Quiz and discover which mom pattern is quietly holding your body, energy, and confidence back.”
+
+Body copy:
+“Be honest… you’ve tried before. You’ve started over. You’ve promised yourself this time would be different. But somehow it keeps slipping back into the same cycle. That’s not because you’re lazy. That’s not because you’re broken. You may just be stuck in the Reset Trap.”
+
+CTA:
+“Take the Quiz”
+
+Support bullets:
+- Takes less than 2 minutes
+- Built for busy moms
+- Personalized result
+- Clear next step based on your mom type
+
+Add a small visual card preview showing the four possible results.
+
+Disclaimer:
+“This quiz is for educational and coaching purposes only. Results vary. Always consult your healthcare provider before beginning a new fitness or nutrition program.”
+
+Quiz page:
+Route: /quiz
+
+Build a mobile-first quiz with:
+- One question per screen
+- Progress bar
+- Large tap-friendly answer cards
+- Back button
+- Smooth transitions
+- Save progress in localStorage/sessionStorage
+- Track quiz start and completion events
+- No distracting nav during quiz, but include Nu-Birth branding
+
+Questions and scoring:
+
+Q1. When you try to restart your health/fitness routine, what usually happens?
+A. I go hard for a few days, then crash. → all_or_nothing
+B. I restart the same plan over and over. → stuck_loop
+C. Life gets too chaotic and I fall off. → overwhelmed
+D. I struggle to even recognize what I need anymore. → lost_herself
+
+Q2. Which phrase feels most true right now?
+A. “If I can’t do it perfectly, I feel like I failed.” → all_or_nothing
+B. “I know what to do, but I keep ending up back here.” → stuck_loop
+C. “Everyone needs something from me all the time.” → overwhelmed
+D. “I don’t feel like myself anymore.” → lost_herself
+
+Q3. What is your biggest obstacle?
+A. Consistency after motivation fades → all_or_nothing
+B. Breaking old habits and cycles → stuck_loop
+C. Time, stress, kids, family, work → overwhelmed
+D. Energy, confidence, identity, self-worth → lost_herself
+
+Q4. How do you feel when you miss a workout or meal plan?
+A. Like I ruined everything → all_or_nothing
+B. Like I’m back at square one again → stuck_loop
+C. Like it was impossible anyway → overwhelmed
+D. Like I’m disappointed in who I’ve become → lost_herself
+
+Q5. What kind of plan would help you most?
+A. A flexible plan that doesn’t punish imperfection → all_or_nothing
+B. A pattern-breaking reset with accountability → stuck_loop
+C. A simple routine that works inside real mom life → overwhelmed
+D. A confidence rebuild that reconnects me to myself → lost_herself
+
+Q6. What best describes your energy?
+A. Comes in bursts, then crashes → all_or_nothing
+B. Feels stuck in the same cycle → stuck_loop
+C. Drained by responsibilities → overwhelmed
+D. Low because I feel disconnected from myself → lost_herself
+
+Q7. What do you want most in the next 90 days?
+A. Stop quitting when it isn’t perfect → all_or_nothing
+B. Finally stop starting over → stuck_loop
+C. Lose weight without adding more chaos → overwhelmed
+D. Feel confident, attractive, and alive again → lost_herself
+
+Q8. How ready are you for support?
+A. I need structure that keeps me from going extreme → all_or_nothing
+B. I need accountability to break the loop → stuck_loop
+C. I need someone to simplify this for my life → overwhelmed
+D. I need someone to help me find myself again → lost_herself
+
+Q9. What happens if nothing changes over the next 6 months?
+A. I’ll keep repeating the same intense restart/crash cycle → all_or_nothing
+B. I’ll still be stuck in the same loop → stuck_loop
+C. I’ll keep putting myself last → overwhelmed
+D. I’ll feel even further away from who I used to be → lost_herself
+
+Scoring:
+Each answer gives 1 point to its associated result.
+Highest score wins.
+Tie breaker:
+Use Q9 first, then Q8, then Q7.
+Save score breakdown and answers.
+
+Lead capture gate:
+Route: /quiz/contact
+
+Before showing results, collect:
+- First name
+- Email
+- Phone optional, but visually encouraged
+- Consent checkbox:
+  “Yes, send me my quiz result, reset tips, and next steps from Nu-Birth Fitness. I understand I can unsubscribe anytime.”
+
+Hidden tracking fields:
+- result_type
+- score_json
+- answers_json
+- session_id
+- utm_source
+- utm_medium
+- utm_campaign
+- utm_content
+- utm_term
+- referrer
+- device type
+- created_at
+
+After submit:
+- Save lead
+- Save quiz answers
+- Tag lead by result type
+- Trigger correct email sequence
+- Notify owner/admin
+- Redirect to correct result page
+
+Result pages:
+Use one reusable result page template and inject result-specific content.
+
+Route examples:
+/results/all-or-nothing
+/results/stuck-in-the-loop
+/results/overwhelmed
+/results/lost-herself
+
+Each result page must include:
+- Personalized headline
+- Emotional diagnosis
+- What this means
+- Why this keeps happening
+- What needs to change
+- Embedded result-specific video area
+- Primary CTA
+- Secondary CTA
+- Sticky mobile CTA
+- Results vary disclaimer
+
+Result content:
+
+All-or-Nothing Mom:
+Headline:
+“You’re the All-or-Nothing Mom”
+
+Core copy:
+“You don’t lack discipline. You’ve been trying to win with a plan that only works when life is perfect. You go hard, push fast, expect a full reset overnight, then one missed day feels like failure. Your body does not need punishment. It needs rhythm, flexibility, and a plan that lets you keep going even when the day gets messy.”
+
+Primary CTA:
+“I’m Ready Now — Book My Reset Call”
+
+CTA subcopy:
+“Show me how to lose weight without starting over every Monday.”
+
+Stuck-in-the-Loop Mom:
+Headline:
+“You’re the Stuck-in-the-Loop Mom”
+
+Core copy:
+“You’re not new to trying. That’s the frustrating part. You know the cycle. You get motivated, restart, make some progress, then something knocks you off and the same loop starts again. This is not a motivation issue. It’s a pattern issue. The goal is not another restart. The goal is breaking the loop completely.”
+
+Primary CTA:
+“I’m Ready Now — Book My Reset Call”
+
+CTA subcopy:
+“Help me finally stop starting over.”
+
+Overwhelmed Mom:
+Headline:
+“You’re the Overwhelmed Mom”
+
+Core copy:
+“You’re carrying too much, and your body has been pushed to the bottom of the list. It’s not that you don’t care. It’s that everyone and everything else keeps cutting the line. You do not need a complicated plan. You need a simple system that fits inside real mom life instead of demanding a fantasy schedule you do not have.”
+
+Primary CTA:
+“I’m Ready Now — Book My Reset Call”
+
+CTA subcopy:
+“Help me make this work with my actual life.”
+
+Lost-Herself Mom:
+Headline:
+“You’re the Lost-Herself Mom”
+
+Core copy:
+“This is deeper than weight. Somewhere between responsibilities, stress, motherhood, and survival mode, you stopped feeling like yourself. The goal is not just a smaller body. The goal is getting your energy, confidence, spark, and identity back. Your reset needs to rebuild the woman, not just change the number on the scale.”
+
+Primary CTA:
+“I’m Ready Now — Book My Reset Call”
+
+CTA subcopy:
+“Help me feel like myself again.”
+
+Secondary CTA for all result pages:
+“I’m Not Ready Yet — Watch the 4-Minute Reset Training”
+
+Booking path:
+Route: /book/:resultType
+
+When the user clicks the ready-now CTA, show a short pre-call intake before opening the calendar.
+
+Fields:
+- Biggest current struggle
+- Goal for the next 90 days
+- What have you tried before?
+- What keeps knocking you off track?
+- How soon do you want help?
+- Are you open to coaching if it feels like the right fit?
+- Best phone number
+- Best time to contact
+
+After intake:
+- Save answers
+- Track intake_completed
+- Show embedded booking calendar or external booking button using BOOKING_URL
+- Preserve resultType and lead email in the booking context where possible
+
+If calendar embed is not available, use a clean button:
+“Open Booking Calendar”
+
+Training path:
+Route: /training/:resultType
+
+For people not ready yet.
+
+Page structure:
+- Headline: “Before You Start Over Again, Watch This”
+- Result-specific intro paragraph
+- 4-minute video embed
+- 3 key takeaways
+- CTA: “Book My Reset Call”
+- Secondary CTA: “Send Me the Reset Plan”
+
+Track:
+- training_viewed
+- training_cta_clicked
+- booking_clicked
+
+Email automation:
+Implement a result-specific nurture framework.
+
+If the existing project already has email integration, reuse it.
+If not, add Resend integration with provider abstraction so it can later be swapped for Mailchimp, GoHighLevel, Klaviyo, SendGrid, or Kajabi.
+
+Required env vars:
+RESEND_API_KEY=
+EMAIL_FROM=
+OWNER_EMAIL=
+PUBLIC_SITE_URL=
+BOOKING_URL=
+ADMIN_PASSWORD=
+META_PIXEL_ID=
+GA4_MEASUREMENT_ID=
+RESULT_VIDEO_ALL_OR_NOTHING=
+RESULT_VIDEO_STUCK_LOOP=
+RESULT_VIDEO_OVERWHELMED=
+RESULT_VIDEO_LOST_HERSELF=
+TRAINING_VIDEO_URL=
+CRM_WEBHOOK_URL=
+
+Email behavior:
+- Send immediate result email after quiz capture.
+- Begin a 10-day result-specific sequence.
+- If lead books, stop nurture.
+- If lead does not book after 10 days, enter 5-Day Mom Reset sequence.
+- Every email includes a booking CTA.
+- Store email logs.
+
+Create editable email templates in seed files or admin settings.
+
+10-day sequence for each result:
+Day 0: Your Quiz Result
+Day 1: Why You Keep Starting Over
+Day 2: The Real Reason Motivation Fades
+Day 3: One Small Reset Task
+Day 4: The Pattern That Keeps You Stuck
+Day 5: Realistic transformation story
+Day 6: What Can Change in 90 Days
+Day 7: Invitation to Book a Reset Call
+Day 8: What If You’re Nervous?
+Day 9: The Cost of Waiting
+Day 10: Final Invite Before the Mom Reset Series
+
+5-Day Mom Reset sequence:
+Day 1: Reset Your Morning
+Day 2: Reset Your Meals
+Day 3: Reset Your Movement
+Day 4: Reset Your Mindset
+Day 5: Go Further With the 3-Month Bootcamp
+
+Admin dashboard:
+Route: /admin/funnel
+
+Use the existing admin style if one exists.
+
+Protect with ADMIN_PASSWORD for MVP.
+
+Dashboard must include:
+- Total quiz starts
+- Quiz completions
+- Leads captured
+- Result breakdown
+- Booking CTA clicks
+- Training clicks
+- Intake completions
+- Booked calls
+- Conversion rate
+- Recent leads
+- Lead detail view
+- Quiz answers
+- Result type
+- Tags
+- Email sequence status
+- Manual “mark booked”
+- CSV export
+
+Tracking:
+Add helper functions for:
+- GA4
+- Meta Pixel
+- internal event logging
+
+Track:
+PageView
+QuizStarted
+QuizQuestionAnswered
+QuizCompleted
+LeadCaptured
+ResultViewed
+BookCTA_Clicked
+TrainingCTA_Clicked
+TrainingViewed
+IntakeCompleted
+CalendarOpened
+BookedCall
+
+Database:
+If the project already has a database, extend existing schema.
+If not, add a clean database layer.
+
+Tables needed:
+leads
+quiz_submissions
+quiz_answers
+lead_events
+email_sequences
+email_messages
+email_logs
+settings
+booking_intakes
+
+Lead fields:
+id
+first_name
+email
+phone
+result_type
+status
+source
+utm_source
+utm_medium
+utm_campaign
+utm_content
+utm_term
+referrer
+tags json/jsonb
+booked_at
+created_at
+updated_at
+
+Webhook:
+Create:
+POST /api/webhooks/booking
+
+It should accept generic booking payloads from Calendly, GoHighLevel, Zapier, Make, Kajabi, or manual form events.
+
+Match lead by email.
+When booking is detected:
+- Set status = booked
+- Set booked_at
+- Add booked_call tag
+- Stop nurture
+- Notify owner/admin
+
+API routes:
+Add or adapt based on existing routing style:
+
+POST /api/quiz/start
+POST /api/quiz/answer
+POST /api/quiz/complete
+POST /api/leads
+POST /api/events
+POST /api/intake
+POST /api/webhooks/booking
+POST /api/email/test
+GET /api/admin/funnel/stats
+GET /api/admin/funnel/leads
+GET /api/admin/funnel/leads/:id
+POST /api/admin/funnel/leads/:id/mark-booked
+GET /api/admin/funnel/export.csv
+GET /api/funnel/settings
+PUT /api/admin/funnel/settings
+
+Design requirements:
+Match the current Nu-Birth Fitness site.
+Do not introduce a clashing theme.
+
+Use:
+- Existing brand colors where possible
+- Existing button styles where possible
+- Existing section spacing
+- Existing header/footer
+- Mobile-first layout
+- Fast loading pages
+- Soft, strong, clean fitness-coaching design
+- Big thumb-friendly answer cards
+- Clear CTAs
+- No clutter
+- No fake buttons
+
+Compliance:
+Add disclaimers in footer and result pages:
+“Results vary. Nu-Birth Fitness provides coaching and educational guidance, not medical advice. Consult your healthcare provider before beginning a new fitness or nutrition program.”
+
+Do not guarantee “20+ lbs.”
+Use wording like:
+“lose up to 20+ lbs”
+“designed to help”
+“built to support”
+“results vary”
+
+Conversion requirements:
+The funnel is complete only when:
+1. The existing site still works.
+2. The homepage has a quiz CTA.
+3. The quiz landing page works.
+4. A visitor can complete all quiz questions.
+5. Result scoring works.
+6. Contact capture is required before results.
+7. Correct result page loads.
+8. Booking path works.
+9. Training path works.
+10. Lead is saved.
+11. Events are tracked.
+12. Correct email sequence is assigned.
+13. Admin can see funnel stats.
+14. Admin can export leads.
+15. Owner gets notified on new lead and booking intent.
+16. Existing site design remains visually consistent.
+17. No broken links.
+18. No placeholder forms.
+19. No console errors.
+20. App deploys successfully on Replit.
+
+Add final documentation:
+Create or update:
+README.md
+FUNNEL_NOTES.md
+.env.example
+
+Document:
+- How to set BOOKING_URL
+- How to add result videos
+- How to add the 4-minute training video
+- How to set up Resend
+- How to add Meta Pixel
+- How to add GA4
+- How to export leads
+- How to test the full funnel
+- Where to place quiz links under YouTube videos, Facebook posts, ads, Instagram bio, pinned comments, and email campaigns
+
+After implementation:
+Run the app.
+Check all routes.
+Fix all visible errors.
+Verify mobile responsiveness.
+Provide a concise change summary and list any environment variables still required.
