@@ -11,7 +11,7 @@ export default function Footer() {
           <Link href="/playlists" className="hover:text-foreground transition-colors">Programs</Link>
           <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
           <Link href="/reset-trap-quiz" className="hover:text-foreground transition-colors font-medium text-primary">
-            Reset Trap Quiz
+            What Type of Mom Are You? Quiz
           </Link>
         </div>
         <FunnelDisclaimer />

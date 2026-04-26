@@ -98,7 +98,7 @@ export default function Home() {
               }}
               data-testid="button-home-quiz"
             >
-              <Sparkles className="w-4 h-4" /> Take the Reset Trap Quiz
+              <Sparkles className="w-4 h-4" /> Take the What Type of Mom Are You? Quiz
             </Button>
           </div>
         </div>
@@ -110,7 +110,7 @@ export default function Home() {
           <div>
             <div className="text-xs font-medium uppercase tracking-wide text-primary mb-1">Free 2-minute quiz</div>
             <h3 className="font-serif font-semibold text-lg sm:text-xl">
-              Take the 2-Minute Reset Trap Quiz
+              Take the 2-Minute What Type of Mom Are You? Quiz
             </h3>
             <p className="text-sm text-muted-foreground mt-1">
               Personalized result + a clear next step for your body, energy, and confidence.
@@ -125,7 +125,7 @@ export default function Home() {
             }}
             data-testid="button-home-quiz-top"
           >
-            Take the 2-Minute Reset Trap Quiz <ArrowRight className="w-4 h-4" />
+            Take the 2-Minute What Type of Mom Are You? Quiz <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
       </div>
@@ -205,7 +205,7 @@ export default function Home() {
             Not sure what’s keeping you stuck? Find your Mom Reset Type.
           </h3>
           <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto mb-5">
-            Take the 2-minute Reset Trap Quiz and find out which mom pattern is keeping you stuck.
+            Take the 2-minute What Type of Mom Are You? Quiz and find out which mom pattern is keeping you stuck.
           </p>
           <Button
             size="lg"

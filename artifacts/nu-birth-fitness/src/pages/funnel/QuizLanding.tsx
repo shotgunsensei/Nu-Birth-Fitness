@@ -67,7 +67,7 @@ export default function QuizLanding() {
           What’s Actually Keeping You Stuck?
         </h1>
         <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed mb-6 max-w-xl mx-auto">
-          Take the 2-minute Reset Trap Quiz and discover which mom pattern is quietly holding your
+          Take the 2-minute What Type of Mom Are You? Quiz and discover which mom pattern is quietly holding your
           body, energy, and confidence back.
         </p>
         <div className="prose prose-sm sm:prose-base mx-auto text-foreground/85 max-w-xl mb-8">

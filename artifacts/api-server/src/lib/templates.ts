@@ -56,7 +56,7 @@ function shell(opts: {
       Results vary. Nu-Birth Fitness provides coaching and educational guidance, not medical advice. Consult your healthcare provider before beginning a new fitness or nutrition program.
     </p>
     <p style="font-size:12px;color:#888;line-height:1.5;margin:12px 0 0;text-align:center;">
-      You're receiving this because you took the Reset Trap Quiz at Nu-Birth Fitness.<br/>
+      You're receiving this because you took the What Type of Mom Are You? Quiz at Nu-Birth Fitness.<br/>
       ${senderAddress ? `${senderAddress}<br/>` : ""}
       <a href="${unsubscribeUrl}" style="color:#888;text-decoration:underline;">Unsubscribe</a>
     </p>
@@ -127,7 +127,7 @@ export function buildResultTenDayMessage(opts: {
   const title = TEN_DAY_TITLES[step] ?? "From Nu-Birth Fitness";
   const intro =
     step === 0
-      ? `Thanks for taking the Reset Trap Quiz.`
+      ? `Thanks for taking the What Type of Mom Are You? Quiz.`
       : `Quick note from Nu-Birth Fitness — Day ${step} of your reset series.`;
   const tpl = shell({
     firstName,

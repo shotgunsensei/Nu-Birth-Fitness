@@ -104,7 +104,7 @@ function Dashboard({ onLogout, selected, setSelected }: { onLogout: () => void; 
       <div className="flex items-center justify-between mb-6 gap-2 flex-wrap">
         <div>
           <h1 className="text-2xl sm:text-3xl font-serif font-semibold">Funnel Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Reset Trap Quiz performance</p>
+          <p className="text-sm text-muted-foreground">What Type of Mom Are You? Quiz performance</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={refreshAll} data-testid="button-refresh">
