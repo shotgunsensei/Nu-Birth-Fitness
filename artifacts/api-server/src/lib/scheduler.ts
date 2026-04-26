@@ -1,6 +1,6 @@
-import { db, leads, emailSequences, emailLogs } from "@workspace/db";
+import { db, leads, emailSequences, emailLogs, emailMessages } from "@workspace/db";
 import type { ResultType } from "@workspace/db";
-import { and, eq, lte, isNotNull, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { sendEmail } from "./mailer";
 import { buildResultTenDayMessage, buildMomResetMessage } from "./templates";
 import { env } from "./env";
@@ -8,31 +8,62 @@ import { logger } from "./logger";
 
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
+const RETRY_MS = 30 * 60 * 1000;
+const STALE_MS = 15 * 60 * 1000;
 
-function bookingUrl() {
+function bookingUrl(): string {
   return env.bookingUrl || `${env.publicSiteUrl}/book/all-or-nothing`;
 }
 
 function unsubscribeUrl(token: string | null | undefined): string {
-  if (!token) return `${env.publicSiteUrl || ""}/api/unsubscribe`;
-  return `${env.publicSiteUrl || ""}/api/unsubscribe?token=${encodeURIComponent(token)}`;
+  const base = env.publicSiteUrl || "";
+  return token
+    ? `${base}/api/unsubscribe?token=${encodeURIComponent(token)}`
+    : `${base}/api/unsubscribe`;
 }
 
-async function processDueSequences() {
+function applyVars(text: string, vars: Record<string, string>): string {
+  return text.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? "");
+}
+
+async function renderTemplate(
+  sequenceType: string,
+  resultType: ResultType,
+  step: number,
+  firstName: string,
+  unsubUrl: string,
+): Promise<{ subject: string; body: string }> {
+  const vars = { firstName, bookingUrl: bookingUrl(), unsubscribeUrl: unsubUrl, resultType };
+  const rows = await db
+    .select({ subject: emailMessages.subject, body: emailMessages.body })
+    .from(emailMessages)
+    .where(
+      and(
+        eq(emailMessages.sequenceType, sequenceType),
+        eq(emailMessages.step, step),
+        sequenceType === "result_10day"
+          ? eq(emailMessages.resultType, resultType)
+          : sql`${emailMessages.resultType} IS NULL`,
+      ),
+    )
+    .limit(1);
+  const row = rows[0];
+  if (row) {
+    return { subject: applyVars(row.subject, vars), body: applyVars(row.body, vars) };
+  }
+  return sequenceType === "result_10day"
+    ? buildResultTenDayMessage({ step, firstName, resultType, bookingUrl: bookingUrl(), unsubscribeUrl: unsubUrl })
+    : buildMomResetMessage({ step, firstName, resultType, bookingUrl: bookingUrl(), unsubscribeUrl: unsubUrl });
+}
+
+async function processDueSequences(): Promise<void> {
   const now = new Date();
-  // Reaper: revive sequences stuck in 'sending' for >15 minutes (a worker crashed
-  // between claim and finalize). Without this, those rows would be stranded
-  // forever and the lead would silently miss the rest of their nurture.
-  const STALE_MS = 15 * 60 * 1000;
+  // Revive sequences stuck in 'sending' so a crashed worker doesn't strand them.
   await db
     .update(emailSequences)
     .set({ status: "active", updatedAt: new Date() })
-    .where(
-      sql`status = 'sending' AND updated_at <= ${new Date(Date.now() - STALE_MS)}`,
-    );
-  // Atomically claim a batch of due sequences by flipping status to 'sending'.
-  // Without this, a concurrent invocation (overlapping ticks, multiple instances,
-  // or a parallel startSequenceForLead) could pick up the same row and send twice.
+    .where(sql`status = 'sending' AND updated_at <= ${new Date(Date.now() - STALE_MS)}`);
+
   const claimed = await db
     .update(emailSequences)
     .set({ status: "sending", updatedAt: new Date() })
@@ -49,26 +80,35 @@ async function processDueSequences() {
     )
     .returning();
 
-  const due = claimed;
-  for (const seq of due) {
+  for (const seq of claimed) {
     const lead = await db.query.leads.findFirst({ where: eq(leads.id, seq.leadId) });
     if (!lead) {
-      await db.update(emailSequences).set({ status: "completed", completedAt: new Date(), updatedAt: new Date() }).where(eq(emailSequences.id, seq.id));
+      await db
+        .update(emailSequences)
+        .set({ status: "completed", completedAt: new Date(), updatedAt: new Date() })
+        .where(eq(emailSequences.id, seq.id));
       continue;
     }
     if (lead.status === "booked" || lead.unsubscribed) {
       await db
         .update(emailSequences)
-        .set({ status: lead.unsubscribed ? "unsubscribed" : "halted_booked", completedAt: new Date(), updatedAt: new Date() })
+        .set({
+          status: lead.unsubscribed ? "unsubscribed" : "halted_booked",
+          completedAt: new Date(),
+          updatedAt: new Date(),
+        })
         .where(eq(emailSequences.id, seq.id));
       continue;
     }
+
     const resultType = (seq.resultType ?? lead.resultType) as ResultType;
-    const unsubUrl = unsubscribeUrl(lead.unsubscribeToken);
-    const tpl =
-      seq.sequenceType === "result_10day"
-        ? buildResultTenDayMessage({ step: seq.currentStep, firstName: lead.firstName, resultType, bookingUrl: bookingUrl(), unsubscribeUrl: unsubUrl })
-        : buildMomResetMessage({ step: seq.currentStep, firstName: lead.firstName, resultType, bookingUrl: bookingUrl(), unsubscribeUrl: unsubUrl });
+    const tpl = await renderTemplate(
+      seq.sequenceType,
+      resultType,
+      seq.currentStep,
+      lead.firstName,
+      unsubscribeUrl(lead.unsubscribeToken),
+    );
 
     const result = await sendEmail({ to: lead.email, subject: tpl.subject, html: tpl.body });
     await db.insert(emailLogs).values({
@@ -83,12 +123,27 @@ async function processDueSequences() {
       errorMessage: result.error ?? null,
     });
 
+    if (!result.ok) {
+      // Don't advance the step on failure; back off and retry on the next tick.
+      await db
+        .update(emailSequences)
+        .set({
+          status: "active",
+          nextSendAt: new Date(Date.now() + RETRY_MS),
+          updatedAt: new Date(),
+        })
+        .where(eq(emailSequences.id, seq.id));
+      logger.warn({ seqId: seq.id, error: result.error }, "[scheduler] send failed; will retry");
+      continue;
+    }
+
     const nextStep = seq.currentStep + 1;
     if (nextStep >= seq.totalSteps) {
-      // Sequence complete
+      await db
+        .update(emailSequences)
+        .set({ status: "completed", completedAt: new Date(), updatedAt: new Date() })
+        .where(eq(emailSequences.id, seq.id));
       if (seq.sequenceType === "result_10day") {
-        // Chain into 5-day reset
-        await db.update(emailSequences).set({ status: "completed", completedAt: new Date() }).where(eq(emailSequences.id, seq.id));
         await db.insert(emailSequences).values({
           leadId: lead.id,
           sequenceType: "mom_reset_5day",
@@ -98,28 +153,25 @@ async function processDueSequences() {
           status: "active",
           nextSendAt: new Date(Date.now() + DAY_MS),
         });
-        await db
-          .update(emailSequences)
-          .set({ status: "completed", completedAt: new Date(), updatedAt: new Date() })
-          .where(eq(emailSequences.id, seq.id));
-      } else {
-        await db.update(emailSequences).set({ status: "completed", completedAt: new Date(), updatedAt: new Date() }).where(eq(emailSequences.id, seq.id));
       }
     } else {
-      // Re-arm the sequence: bump step, schedule next send, return status to 'active'.
       await db
         .update(emailSequences)
-        .set({ currentStep: nextStep, nextSendAt: new Date(Date.now() + DAY_MS), status: "active", updatedAt: new Date() })
+        .set({
+          currentStep: nextStep,
+          nextSendAt: new Date(Date.now() + DAY_MS),
+          status: "active",
+          updatedAt: new Date(),
+        })
         .where(eq(emailSequences.id, seq.id));
     }
   }
-  if (due.length > 0) {
-    logger.info({ processed: due.length }, "[scheduler] processed sequence steps");
+  if (claimed.length > 0) {
+    logger.info({ processed: claimed.length }, "[scheduler] processed sequence steps");
   }
 }
 
-export async function startSequenceForLead(leadId: number, resultType: ResultType) {
-  // Day 0 result email goes immediately
+export async function startSequenceForLead(leadId: number, resultType: ResultType): Promise<void> {
   await db.insert(emailSequences).values({
     leadId,
     sequenceType: "result_10day",
@@ -129,16 +181,18 @@ export async function startSequenceForLead(leadId: number, resultType: ResultTyp
     status: "active",
     nextSendAt: new Date(),
   });
-  // Process immediately so day-0 fires now
   await processDueSequences();
 }
 
-export async function haltSequencesForLead(leadId: number) {
-  await db.update(emailSequences).set({ status: "halted_booked", completedAt: new Date() }).where(and(eq(emailSequences.leadId, leadId), eq(emailSequences.status, "active")));
+export async function haltSequencesForLead(leadId: number): Promise<void> {
+  await db
+    .update(emailSequences)
+    .set({ status: "halted_booked", completedAt: new Date() })
+    .where(and(eq(emailSequences.leadId, leadId), eq(emailSequences.status, "active")));
 }
 
 let interval: NodeJS.Timeout | null = null;
-export function startSchedulerLoop() {
+export function startSchedulerLoop(): void {
   if (interval) return;
   interval = setInterval(() => {
     processDueSequences().catch((err) => logger.error({ err }, "[scheduler] tick error"));
@@ -146,6 +200,6 @@ export function startSchedulerLoop() {
   logger.info("[scheduler] started (hourly tick)");
 }
 
-export async function tickNow() {
+export async function tickNow(): Promise<void> {
   await processDueSequences();
 }

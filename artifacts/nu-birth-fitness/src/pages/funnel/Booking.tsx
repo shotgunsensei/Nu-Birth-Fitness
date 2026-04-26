@@ -45,11 +45,7 @@ export default function Booking({ params }: { params: { slug: string } }) {
     track("PageView", { page: "booking", resultType }, { sessionId });
   }, [resultType, setLocation, sessionId]);
 
-  // Listen for the booking provider's "event scheduled" postMessage so we can
-  // fire BookedCall to GA4/Meta the moment the user confirms in the iframe,
-  // alongside the server-side webhook path. Calendly: type starts with
-  // "calendly." and the scheduled event is "calendly.event_scheduled".
-  // Cal.com: type === "linkReady" / "bookingSuccessful". We accept any of these.
+  // Fire BookedCall when the calendar iframe confirms a booking.
   useEffect(() => {
     if (!resultType) return;
     function handle(e: MessageEvent) {
@@ -89,9 +85,6 @@ export default function Booking({ params }: { params: { slug: string } }) {
   }
 
   function buildCalendarUrl(base: string): string {
-    // Preserve lead context into the calendar handoff so the provider
-    // (Calendly / Cal.com / Acuity) can prefill name + email and we keep
-    // the result type for downstream attribution.
     try {
       const u = new URL(base);
       if (firstName) u.searchParams.set("name", firstName);
