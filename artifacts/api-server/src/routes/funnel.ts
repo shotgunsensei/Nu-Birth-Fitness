@@ -149,6 +149,13 @@ router.post("/leads", async (req, res) => {
     return;
   }
   const b = parsed.data;
+  // CAN-SPAM / GDPR posture: no consent → no row, no events, no email. The
+  // frontend already enforces the checkbox; this guard hardens against direct
+  // API callers and avoids accidentally enrolling someone in nurture.
+  if (!b.consent) {
+    res.status(400).json({ error: "Consent is required to capture a lead." });
+    return;
+  }
   const existing = await db.query.leads.findFirst({ where: eq(leads.email, b.email) });
   let leadId: number;
   if (existing) {
