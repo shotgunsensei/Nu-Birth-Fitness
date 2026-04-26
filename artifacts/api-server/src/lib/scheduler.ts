@@ -194,10 +194,16 @@ export async function haltSequencesForLead(leadId: number): Promise<void> {
 let interval: NodeJS.Timeout | null = null;
 export function startSchedulerLoop(): void {
   if (interval) return;
+  // Run an immediate catch-up tick after boot so any messages that came due
+  // during downtime get processed without waiting up to an hour for the next
+  // interval. Errors are logged, never thrown — boot must not fail on this.
+  processDueSequences().catch((err) =>
+    logger.error({ err }, "[scheduler] startup catch-up tick error"),
+  );
   interval = setInterval(() => {
     processDueSequences().catch((err) => logger.error({ err }, "[scheduler] tick error"));
   }, HOUR_MS);
-  logger.info("[scheduler] started (hourly tick)");
+  logger.info("[scheduler] started (immediate catch-up + hourly tick)");
 }
 
 export async function tickNow(): Promise<void> {

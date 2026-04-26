@@ -58,6 +58,7 @@ export default function Training({ params }: { params: { slug: string } }) {
   const videoSrc = settings?.trainingVideoUrl || null;
 
   function clickBook() {
+    track("TrainingCTA_Clicked", { resultType, source: "training_book" }, { sessionId });
     track("BookCTA_Clicked", { resultType, source: "training" }, { sessionId });
     setLocation(`/book/${RESULT_SLUGS[resultType!]}`);
   }
