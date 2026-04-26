@@ -1,5 +1,4 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "zzsvOwWeX-Z7A70-kY7UO"
@@ -12,3 +11,9 @@ id = "e81at4flJ67V30Tze0fbZ"
 uri = "file://artifacts/nu-birth-fitness/public/hero-bg.png"
 type = "image"
 title = "Hero background abstract"
+
+[[outputs]]
+id = "Dpth94Dk7D8vwlUlLwzEX"
+uri = "file://docs/client-handoff.md"
+type = "text"
+title = "NU Birth Fitness — Client Handoff"
