@@ -68,32 +68,157 @@ export interface FunnelSettings {
   resultVideos?: FunnelSettingsResultVideos;
 }
 
+export interface BookingIntakeCreate {
+  email: string;
+  resultType: ResultType;
+  biggestStruggle?: string;
+  goal90Days?: string;
+  triedBefore?: string;
+  knockedOff?: string;
+  howSoon?: string;
+  openToCoaching?: string;
+  bestPhone?: string;
+  bestTime?: string;
+}
+
+export type AdminStatsTotals = {
+  quizStarts?: number;
+  quizCompletions?: number;
+  leadsCaptured?: number;
+  bookCtaClicks?: number;
+  trainingClicks?: number;
+  trainingViews?: number;
+  intakeCompleted?: number;
+  calendarOpened?: number;
+  bookedCalls?: number;
+  resultViewed?: number;
+  conversionRate?: number;
+};
+
+export type AdminStatsBreakdownItem = {
+  resultType?: ResultType;
+  count?: number;
+};
+
+export interface AdminStats {
+  totals: AdminStatsTotals;
+  breakdown: AdminStatsBreakdownItem[];
+}
+
+export type AdminLeadDetailSubmissionScoreJson = { [key: string]: number };
+
+export type AdminLeadDetailSubmissionAnswersJson = { [key: string]: string };
+
+export type AdminLeadDetailSubmission = {
+  id?: number;
+  sessionId?: string;
+  resultType?: ResultType;
+  scoreJson?: AdminLeadDetailSubmissionScoreJson;
+  answersJson?: AdminLeadDetailSubmissionAnswersJson;
+  completedAt?: string | null;
+  [key: string]: unknown;
+} | null;
+
+export type AdminLeadDetailEventsItemPayload = {
+  [key: string]: unknown;
+} | null;
+
+export type AdminLeadDetailEventsItem = {
+  id?: number;
+  eventName?: string;
+  payload?: AdminLeadDetailEventsItemPayload;
+  createdAt?: string;
+  [key: string]: unknown;
+};
+
+export type AdminLeadDetailIntakesItem = { [key: string]: unknown };
+
+export type AdminLeadDetailSequencesItem = {
+  id?: number;
+  sequenceType?: string;
+  currentStep?: number;
+  totalSteps?: number;
+  status?: string;
+  [key: string]: unknown;
+};
+
+export type AdminLeadDetailEmailsItem = {
+  id?: number;
+  subject?: string;
+  status?: string;
+  sentAt?: string;
+  [key: string]: unknown;
+};
+
+export interface AdminLeadDetail {
+  lead: Lead;
+  submission?: AdminLeadDetailSubmission;
+  events: AdminLeadDetailEventsItem[];
+  intakes: AdminLeadDetailIntakesItem[];
+  sequences: AdminLeadDetailSequencesItem[];
+  emails: AdminLeadDetailEmailsItem[];
+}
+
+/**
+ * Raw key→value overrides stored in funnel_settings.
+ */
+export type AdminSettingsOverrides = { [key: string]: string };
+
+export type AdminSettingsEffectiveResultVideos = { [key: string]: string };
+
+export type AdminSettingsEffective = {
+  bookingUrl?: string;
+  publicSiteUrl?: string;
+  trainingVideoUrl?: string;
+  ownerEmail?: string;
+  mailingAddress?: string;
+  resultVideos?: AdminSettingsEffectiveResultVideos;
+};
+
+export interface AdminSettings {
+  /** Raw key→value overrides stored in funnel_settings. */
+  overrides: AdminSettingsOverrides;
+  effective: AdminSettingsEffective;
+}
+
 export type QuizStartBody = {
   sessionId: string;
 };
 
-export type QuizAnswerBodyChoice =
-  (typeof QuizAnswerBodyChoice)[keyof typeof QuizAnswerBodyChoice];
-
-export const QuizAnswerBodyChoice = {
-  A: "A",
-  B: "B",
-  C: "C",
-  D: "D",
-} as const;
-
 export type QuizAnswerBody = {
   sessionId: string;
-  questionId: string;
-  choice: QuizAnswerBodyChoice;
+  questionKey: string;
+  answerKey: string;
+  answerType: ResultType;
 };
 
-export type QuizCompleteBodyScore = { [key: string]: number };
+/**
+ * Map of resultType → numeric score.
+ */
+export type QuizCompleteBodyScoreJson = { [key: string]: number };
+
+/**
+ * Map of questionKey → answerKey selected by the user.
+ */
+export type QuizCompleteBodyAnswersJson = { [key: string]: string };
 
 export type QuizCompleteBody = {
   sessionId: string;
   resultType: ResultType;
-  score?: QuizCompleteBodyScore;
+  /** Map of resultType → numeric score. */
+  scoreJson: QuizCompleteBodyScoreJson;
+  /** Map of questionKey → answerKey selected by the user. */
+  answersJson: QuizCompleteBodyAnswersJson;
+};
+
+export type SendTestEmailBody = {
+  to: string;
+  resultType?: ResultType;
+};
+
+export type SendTestEmail200 = {
+  ok?: boolean;
+  [key: string]: unknown;
 };
 
 export type CreateLead200 = Ok & {
@@ -124,4 +249,31 @@ export type UnsubscribeParams = {
 
 export type AdminLoginBody = {
   password: string;
+};
+
+export type AdminMe200 = {
+  authenticated: boolean;
+  configured: boolean;
+};
+
+export type AdminListLeadsParams = {
+  /**
+   * @minimum 1
+   * @maximum 500
+   */
+  limit?: number;
+};
+
+export type AdminListLeads200 = {
+  leads: Lead[];
+};
+
+export type AdminPutSettingsBodySettings = { [key: string]: string };
+
+export type AdminPutSettingsBody = {
+  settings: AdminPutSettingsBodySettings;
+};
+
+export type AdminPutSettings200 = Ok & {
+  count?: number;
 };

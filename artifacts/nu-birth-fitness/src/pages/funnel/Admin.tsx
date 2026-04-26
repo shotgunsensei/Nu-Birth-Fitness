@@ -205,7 +205,11 @@ function LeadDetail({ leadId, onChanged }: { leadId: number | null; onChanged: (
   if (isLoading || !data) {
     return <Card className="p-8 rounded-2xl text-center text-sm text-muted-foreground">Loading…</Card>;
   }
-  const { lead, events, intakes, sequences, emails } = data;
+  const { lead, submission, events, intakes, sequences, emails } = data;
+  const tags: string[] = Array.isArray(lead.tags) ? lead.tags : [];
+  const answers: Record<string, string> = (submission?.answersJson ?? {}) as Record<string, string>;
+  const scores: Record<string, number> = (submission?.scoreJson ?? {}) as Record<string, number>;
+  const answerEntries = Object.entries(answers);
 
   async function markBooked() {
     await adminApi.markBooked(leadId!);
@@ -234,6 +238,38 @@ function LeadDetail({ leadId, onChanged }: { leadId: number | null; onChanged: (
           </Button>
         )}
       </div>
+
+      {tags.length > 0 && (
+        <Section title="Tags">
+          <div className="flex flex-wrap gap-1.5" data-testid="lead-tags">
+            {tags.map((t) => (
+              <Badge key={t} variant="secondary" className="text-[11px]">
+                {t}
+              </Badge>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      <Section title="Quiz answers">
+        {answerEntries.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No quiz submission linked.</p>
+        ) : (
+          <div className="space-y-1.5" data-testid="lead-answers">
+            {answerEntries.map(([qKey, aKey]) => (
+              <div key={qKey} className="text-xs flex items-center justify-between gap-2 bg-muted/40 rounded-lg px-3 py-1.5">
+                <span className="font-medium">{qKey}</span>
+                <span className="text-muted-foreground tabular-nums">{aKey}</span>
+              </div>
+            ))}
+            {Object.keys(scores).length > 0 && (
+              <div className="text-[11px] text-muted-foreground pt-1">
+                Scores: {Object.entries(scores).map(([k, v]) => `${k}=${v}`).join(" • ")}
+              </div>
+            )}
+          </div>
+        )}
+      </Section>
 
       <Section title="Intakes">
         {intakes.length === 0 ? (

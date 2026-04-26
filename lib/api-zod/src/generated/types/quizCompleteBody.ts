@@ -5,11 +5,15 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { QuizCompleteBodyScore } from "./quizCompleteBodyScore";
+import type { QuizCompleteBodyAnswersJson } from "./quizCompleteBodyAnswersJson";
+import type { QuizCompleteBodyScoreJson } from "./quizCompleteBodyScoreJson";
 import type { ResultType } from "./resultType";
 
 export type QuizCompleteBody = {
   sessionId: string;
   resultType: ResultType;
-  score?: QuizCompleteBodyScore;
+  /** Map of resultType → numeric score. */
+  scoreJson: QuizCompleteBodyScoreJson;
+  /** Map of questionKey → answerKey selected by the user. */
+  answersJson: QuizCompleteBodyAnswersJson;
 };

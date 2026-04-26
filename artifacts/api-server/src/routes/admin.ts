@@ -9,6 +9,7 @@ import {
   bookingIntakes,
   emailSequences,
   emailLogs,
+  settings as funnelSettings,
   type ResultType,
 } from "@workspace/db";
 import { env } from "../lib/env";
@@ -154,6 +155,50 @@ router.post("/admin/funnel/leads/:id/mark-booked", requireAdmin, async (req, res
     sendEmail({ to: env.ownerEmail, subject: tpl.subject, html: tpl.body }).catch(() => {});
   }
   res.json({ ok: true });
+});
+
+router.get("/admin/funnel/settings", requireAdmin, async (_req, res) => {
+  const rows = await db.select().from(funnelSettings);
+  const overrides: Record<string, string> = {};
+  for (const r of rows) overrides[r.key] = r.value;
+  // Merge: env defaults are the base, DB overrides win.
+  const effective = {
+    bookingUrl: overrides.bookingUrl ?? env.bookingUrl ?? "",
+    publicSiteUrl: overrides.publicSiteUrl ?? env.publicSiteUrl ?? "",
+    trainingVideoUrl: overrides.trainingVideoUrl ?? env.trainingVideoUrl ?? "",
+    ownerEmail: overrides.ownerEmail ?? env.ownerEmail ?? "",
+    mailingAddress: overrides.mailingAddress ?? env.mailingAddress ?? "",
+    resultVideos: {
+      all_or_nothing: overrides.resultVideo_all_or_nothing ?? env.resultVideos.all_or_nothing ?? "",
+      stuck_loop: overrides.resultVideo_stuck_loop ?? env.resultVideos.stuck_loop ?? "",
+      overwhelmed: overrides.resultVideo_overwhelmed ?? env.resultVideos.overwhelmed ?? "",
+      lost_herself: overrides.resultVideo_lost_herself ?? env.resultVideos.lost_herself ?? "",
+    },
+  };
+  res.json({ overrides, effective });
+});
+
+router.put("/admin/funnel/settings", requireAdmin, async (req, res) => {
+  const schema = z.object({
+    settings: z.record(z.string(), z.string()),
+  });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid body" });
+    return;
+  }
+  const entries = Object.entries(parsed.data.settings);
+  for (const [key, value] of entries) {
+    if (value === "") {
+      await db.delete(funnelSettings).where(eq(funnelSettings.key, key));
+    } else {
+      await db
+        .insert(funnelSettings)
+        .values({ key, value, updatedAt: new Date() })
+        .onConflictDoUpdate({ target: funnelSettings.key, set: { value, updatedAt: new Date() } });
+    }
+  }
+  res.json({ ok: true, count: entries.length });
 });
 
 router.get("/admin/funnel/export.csv", requireAdmin, async (_req, res) => {

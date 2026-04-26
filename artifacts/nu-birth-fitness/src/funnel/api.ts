@@ -88,4 +88,26 @@ export const adminApi = {
     }>(`/admin/funnel/leads/${id}`),
   markBooked: (id: number) => jpost(`/admin/funnel/leads/${id}/mark-booked`, {}),
   exportUrl: () => `/api/admin/funnel/export.csv`,
+  settings: () =>
+    jget<{
+      overrides: Record<string, string>;
+      effective: {
+        bookingUrl: string;
+        publicSiteUrl: string;
+        trainingVideoUrl: string;
+        ownerEmail: string;
+        mailingAddress: string;
+        resultVideos: Record<string, string>;
+      };
+    }>("/admin/funnel/settings"),
+  putSettings: (settings: Record<string, string>) =>
+    fetch("/api/admin/funnel/settings", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ settings }),
+    }).then(async (r) => {
+      if (!r.ok) throw new Error(await r.text());
+      return r.json() as Promise<{ ok: boolean; count: number }>;
+    }),
 };

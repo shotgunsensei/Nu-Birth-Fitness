@@ -27,12 +27,22 @@ export const QuizStartResponse = zod.object({
 });
 
 /**
+ * `questionKey` is the stable key of the quiz question (e.g. `q1_pattern`),
+`answerKey` is the option key the user picked (`A` | `B` | `C` | `D`),
+and `answerType` is the mom-type slug that option scores into.
+
  * @summary Record a single quiz answer
  */
 export const QuizAnswerBody = zod.object({
   sessionId: zod.string(),
-  questionId: zod.string(),
-  choice: zod.enum(["A", "B", "C", "D"]),
+  questionKey: zod.string(),
+  answerKey: zod.string(),
+  answerType: zod.enum([
+    "all_or_nothing",
+    "stuck_loop",
+    "overwhelmed",
+    "lost_herself",
+  ]),
 });
 
 export const QuizAnswerResponse = zod.object({
@@ -50,11 +60,55 @@ export const QuizCompleteBody = zod.object({
     "overwhelmed",
     "lost_herself",
   ]),
-  score: zod.record(zod.string(), zod.number()).optional(),
+  scoreJson: zod
+    .record(zod.string(), zod.number())
+    .describe("Map of resultType → numeric score."),
+  answersJson: zod
+    .record(zod.string(), zod.string())
+    .describe("Map of questionKey → answerKey selected by the user."),
 });
 
 export const QuizCompleteResponse = zod.object({
   ok: zod.boolean(),
+});
+
+/**
+ * @summary Save the pre-call intake form a lead fills before their booking
+ */
+export const CreateBookingIntakeBody = zod.object({
+  email: zod.string().email(),
+  resultType: zod.enum([
+    "all_or_nothing",
+    "stuck_loop",
+    "overwhelmed",
+    "lost_herself",
+  ]),
+  biggestStruggle: zod.string().optional(),
+  goal90Days: zod.string().optional(),
+  triedBefore: zod.string().optional(),
+  knockedOff: zod.string().optional(),
+  howSoon: zod.string().optional(),
+  openToCoaching: zod.string().optional(),
+  bestPhone: zod.string().optional(),
+  bestTime: zod.string().optional(),
+});
+
+export const CreateBookingIntakeResponse = zod.object({
+  ok: zod.boolean(),
+});
+
+/**
+ * @summary Render a result-day-0 template and email it (dev/owner tooling)
+ */
+export const SendTestEmailBody = zod.object({
+  to: zod.string().email(),
+  resultType: zod
+    .enum(["all_or_nothing", "stuck_loop", "overwhelmed", "lost_herself"])
+    .optional(),
+});
+
+export const SendTestEmailResponse = zod.object({
+  ok: zod.boolean().optional(),
 });
 
 /**
@@ -167,19 +221,181 @@ export const AdminLoginResponse = zod.object({
 });
 
 /**
+ * @summary Clear the admin session cookie
+ */
+export const AdminLogoutResponse = zod.object({
+  ok: zod.boolean(),
+});
+
+/**
+ * @summary Whether the current cookie is a valid admin session
+ */
+export const AdminMeResponse = zod.object({
+  authenticated: zod.boolean(),
+  configured: zod.boolean(),
+});
+
+/**
+ * @summary Aggregate funnel KPIs and mom-type breakdown
+ */
+export const AdminStatsResponse = zod.object({
+  totals: zod.object({
+    quizStarts: zod.number().optional(),
+    quizCompletions: zod.number().optional(),
+    leadsCaptured: zod.number().optional(),
+    bookCtaClicks: zod.number().optional(),
+    trainingClicks: zod.number().optional(),
+    trainingViews: zod.number().optional(),
+    intakeCompleted: zod.number().optional(),
+    calendarOpened: zod.number().optional(),
+    bookedCalls: zod.number().optional(),
+    resultViewed: zod.number().optional(),
+    conversionRate: zod.number().optional(),
+  }),
+  breakdown: zod.array(
+    zod.object({
+      resultType: zod
+        .enum(["all_or_nothing", "stuck_loop", "overwhelmed", "lost_herself"])
+        .optional(),
+      count: zod.number().optional(),
+    }),
+  ),
+});
+
+/**
  * @summary Paginated list of captured leads
  */
-export const AdminListLeadsResponseItem = zod.object({
-  id: zod.number().optional(),
-  firstName: zod.string().optional(),
-  email: zod.string().optional(),
-  phone: zod.string().nullish(),
-  resultType: zod
-    .enum(["all_or_nothing", "stuck_loop", "overwhelmed", "lost_herself"])
-    .optional(),
-  status: zod.string().optional(),
-  bookedAt: zod.coerce.date().nullish(),
-  unsubscribed: zod.boolean().optional(),
-  createdAt: zod.coerce.date().optional(),
+export const adminListLeadsQueryLimitDefault = 100;
+export const adminListLeadsQueryLimitMax = 500;
+
+export const AdminListLeadsQueryParams = zod.object({
+  limit: zod.coerce
+    .number()
+    .min(1)
+    .max(adminListLeadsQueryLimitMax)
+    .default(adminListLeadsQueryLimitDefault),
 });
-export const AdminListLeadsResponse = zod.array(AdminListLeadsResponseItem);
+
+export const AdminListLeadsResponse = zod.object({
+  leads: zod.array(
+    zod.object({
+      id: zod.number().optional(),
+      firstName: zod.string().optional(),
+      email: zod.string().optional(),
+      phone: zod.string().nullish(),
+      resultType: zod
+        .enum(["all_or_nothing", "stuck_loop", "overwhelmed", "lost_herself"])
+        .optional(),
+      status: zod.string().optional(),
+      bookedAt: zod.coerce.date().nullish(),
+      unsubscribed: zod.boolean().optional(),
+      createdAt: zod.coerce.date().optional(),
+    }),
+  ),
+});
+
+/**
+ * @summary Lead detail bundle (lead + quiz submission + intakes + sequences + emails + recent events)
+ */
+export const AdminLeadDetailParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const AdminLeadDetailResponse = zod.object({
+  lead: zod.object({
+    id: zod.number().optional(),
+    firstName: zod.string().optional(),
+    email: zod.string().optional(),
+    phone: zod.string().nullish(),
+    resultType: zod
+      .enum(["all_or_nothing", "stuck_loop", "overwhelmed", "lost_herself"])
+      .optional(),
+    status: zod.string().optional(),
+    bookedAt: zod.coerce.date().nullish(),
+    unsubscribed: zod.boolean().optional(),
+    createdAt: zod.coerce.date().optional(),
+  }),
+  submission: zod
+    .object({
+      id: zod.number().optional(),
+      sessionId: zod.string().optional(),
+      resultType: zod
+        .enum(["all_or_nothing", "stuck_loop", "overwhelmed", "lost_herself"])
+        .optional(),
+      scoreJson: zod.record(zod.string(), zod.number()).optional(),
+      answersJson: zod.record(zod.string(), zod.string()).optional(),
+      completedAt: zod.coerce.date().nullish(),
+    })
+    .nullish(),
+  events: zod.array(
+    zod.object({
+      id: zod.number().optional(),
+      eventName: zod.string().optional(),
+      payload: zod.record(zod.string(), zod.unknown()).nullish(),
+      createdAt: zod.coerce.date().optional(),
+    }),
+  ),
+  intakes: zod.array(zod.record(zod.string(), zod.unknown())),
+  sequences: zod.array(
+    zod.object({
+      id: zod.number().optional(),
+      sequenceType: zod.string().optional(),
+      currentStep: zod.number().optional(),
+      totalSteps: zod.number().optional(),
+      status: zod.string().optional(),
+    }),
+  ),
+  emails: zod.array(
+    zod.object({
+      id: zod.number().optional(),
+      subject: zod.string().optional(),
+      status: zod.string().optional(),
+      sentAt: zod.coerce.date().optional(),
+    }),
+  ),
+});
+
+/**
+ * @summary Manually mark a lead as booked (halts their nurture)
+ */
+export const AdminMarkBookedParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const AdminMarkBookedResponse = zod.object({
+  ok: zod.boolean(),
+});
+
+/**
+ * @summary Read current funnel settings (env defaults + DB overrides)
+ */
+export const AdminGetSettingsResponse = zod.object({
+  overrides: zod
+    .record(zod.string(), zod.string())
+    .describe("Raw key→value overrides stored in funnel_settings."),
+  effective: zod.object({
+    bookingUrl: zod.string().optional(),
+    publicSiteUrl: zod.string().optional(),
+    trainingVideoUrl: zod.string().optional(),
+    ownerEmail: zod.string().optional(),
+    mailingAddress: zod.string().optional(),
+    resultVideos: zod.record(zod.string(), zod.string()).optional(),
+  }),
+});
+
+/**
+ * @summary Upsert one or more funnel settings; empty string deletes the override
+ */
+export const AdminPutSettingsBody = zod.object({
+  settings: zod.record(zod.string(), zod.string()),
+});
+
+export const AdminPutSettingsResponse = zod
+  .object({
+    ok: zod.boolean(),
+  })
+  .and(
+    zod.object({
+      count: zod.number().optional(),
+    }),
+  );

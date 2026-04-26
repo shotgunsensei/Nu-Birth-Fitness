@@ -17,18 +17,28 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AdminLeadDetail,
+  AdminListLeads200,
+  AdminListLeadsParams,
   AdminLoginBody,
+  AdminMe200,
+  AdminPutSettings200,
+  AdminPutSettingsBody,
+  AdminSettings,
+  AdminStats,
+  BookingIntakeCreate,
   BookingWebhook200,
   BookingWebhookBody,
   CreateLead200,
   FunnelSettings,
   HealthStatus,
-  Lead,
   LeadCreate,
   Ok,
   QuizAnswerBody,
   QuizCompleteBody,
   QuizStartBody,
+  SendTestEmail200,
+  SendTestEmailBody,
   TrackEventBody,
   UnsubscribeParams,
 } from "./api.schemas";
@@ -205,6 +215,10 @@ export const useQuizStart = <
 };
 
 /**
+ * `questionKey` is the stable key of the quiz question (e.g. `q1_pattern`),
+`answerKey` is the option key the user picked (`A` | `B` | `C` | `D`),
+and `answerType` is the mom-type slug that option scores into.
+
  * @summary Record a single quiz answer
  */
 export const getQuizAnswerUrl = () => {
@@ -374,6 +388,178 @@ export const useQuizComplete = <
   TContext
 > => {
   return useMutation(getQuizCompleteMutationOptions(options));
+};
+
+/**
+ * @summary Save the pre-call intake form a lead fills before their booking
+ */
+export const getCreateBookingIntakeUrl = () => {
+  return `/api/intake`;
+};
+
+export const createBookingIntake = async (
+  bookingIntakeCreate: BookingIntakeCreate,
+  options?: RequestInit,
+): Promise<Ok> => {
+  return customFetch<Ok>(getCreateBookingIntakeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(bookingIntakeCreate),
+  });
+};
+
+export const getCreateBookingIntakeMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createBookingIntake>>,
+    TError,
+    { data: BodyType<BookingIntakeCreate> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createBookingIntake>>,
+  TError,
+  { data: BodyType<BookingIntakeCreate> },
+  TContext
+> => {
+  const mutationKey = ["createBookingIntake"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createBookingIntake>>,
+    { data: BodyType<BookingIntakeCreate> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createBookingIntake(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateBookingIntakeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createBookingIntake>>
+>;
+export type CreateBookingIntakeMutationBody = BodyType<BookingIntakeCreate>;
+export type CreateBookingIntakeMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Save the pre-call intake form a lead fills before their booking
+ */
+export const useCreateBookingIntake = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createBookingIntake>>,
+    TError,
+    { data: BodyType<BookingIntakeCreate> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createBookingIntake>>,
+  TError,
+  { data: BodyType<BookingIntakeCreate> },
+  TContext
+> => {
+  return useMutation(getCreateBookingIntakeMutationOptions(options));
+};
+
+/**
+ * @summary Render a result-day-0 template and email it (dev/owner tooling)
+ */
+export const getSendTestEmailUrl = () => {
+  return `/api/email/test`;
+};
+
+export const sendTestEmail = async (
+  sendTestEmailBody: SendTestEmailBody,
+  options?: RequestInit,
+): Promise<SendTestEmail200> => {
+  return customFetch<SendTestEmail200>(getSendTestEmailUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(sendTestEmailBody),
+  });
+};
+
+export const getSendTestEmailMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendTestEmail>>,
+    TError,
+    { data: BodyType<SendTestEmailBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof sendTestEmail>>,
+  TError,
+  { data: BodyType<SendTestEmailBody> },
+  TContext
+> => {
+  const mutationKey = ["sendTestEmail"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof sendTestEmail>>,
+    { data: BodyType<SendTestEmailBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return sendTestEmail(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SendTestEmailMutationResult = NonNullable<
+  Awaited<ReturnType<typeof sendTestEmail>>
+>;
+export type SendTestEmailMutationBody = BodyType<SendTestEmailBody>;
+export type SendTestEmailMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Render a result-day-0 template and email it (dev/owner tooling)
+ */
+export const useSendTestEmail = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendTestEmail>>,
+    TError,
+    { data: BodyType<SendTestEmailBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof sendTestEmail>>,
+  TError,
+  { data: BodyType<SendTestEmailBody> },
+  TContext
+> => {
+  return useMutation(getSendTestEmailMutationOptions(options));
 };
 
 /**
@@ -895,31 +1081,175 @@ export const useAdminLogin = <
 };
 
 /**
- * @summary Paginated list of captured leads
+ * @summary Clear the admin session cookie
  */
-export const getAdminListLeadsUrl = () => {
-  return `/api/admin/funnel/leads`;
+export const getAdminLogoutUrl = () => {
+  return `/api/admin/funnel/logout`;
 };
 
-export const adminListLeads = async (
-  options?: RequestInit,
-): Promise<Lead[]> => {
-  return customFetch<Lead[]>(getAdminListLeadsUrl(), {
+export const adminLogout = async (options?: RequestInit): Promise<Ok> => {
+  return customFetch<Ok>(getAdminLogoutUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getAdminLogoutMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminLogout>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminLogout>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["adminLogout"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminLogout>>,
+    void
+  > = () => {
+    return adminLogout(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminLogoutMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminLogout>>
+>;
+
+export type AdminLogoutMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Clear the admin session cookie
+ */
+export const useAdminLogout = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminLogout>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminLogout>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getAdminLogoutMutationOptions(options));
+};
+
+/**
+ * @summary Whether the current cookie is a valid admin session
+ */
+export const getAdminMeUrl = () => {
+  return `/api/admin/funnel/me`;
+};
+
+export const adminMe = async (options?: RequestInit): Promise<AdminMe200> => {
+  return customFetch<AdminMe200>(getAdminMeUrl(), {
     ...options,
     method: "GET",
   });
 };
 
-export const getAdminListLeadsQueryKey = () => {
-  return [`/api/admin/funnel/leads`] as const;
+export const getAdminMeQueryKey = () => {
+  return [`/api/admin/funnel/me`] as const;
 };
 
-export const getAdminListLeadsQueryOptions = <
-  TData = Awaited<ReturnType<typeof adminListLeads>>,
+export const getAdminMeQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminMe>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof adminMe>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminMeQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminMe>>> = ({
+    signal,
+  }) => adminMe({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminMe>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type AdminMeQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminMe>>
+>;
+export type AdminMeQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Whether the current cookie is a valid admin session
+ */
+
+export function useAdminMe<
+  TData = Awaited<ReturnType<typeof adminMe>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof adminMe>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminMeQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Aggregate funnel KPIs and mom-type breakdown
+ */
+export const getAdminStatsUrl = () => {
+  return `/api/admin/funnel/stats`;
+};
+
+export const adminStats = async (
+  options?: RequestInit,
+): Promise<AdminStats> => {
+  return customFetch<AdminStats>(getAdminStatsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getAdminStatsQueryKey = () => {
+  return [`/api/admin/funnel/stats`] as const;
+};
+
+export const getAdminStatsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminStats>>,
   TError = ErrorType<unknown>,
 >(options?: {
   query?: UseQueryOptions<
-    Awaited<ReturnType<typeof adminListLeads>>,
+    Awaited<ReturnType<typeof adminStats>>,
     TError,
     TData
   >;
@@ -927,11 +1257,102 @@ export const getAdminListLeadsQueryOptions = <
 }) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getAdminListLeadsQueryKey();
+  const queryKey = queryOptions?.queryKey ?? getAdminStatsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminStats>>> = ({
+    signal,
+  }) => adminStats({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminStats>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type AdminStatsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminStats>>
+>;
+export type AdminStatsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Aggregate funnel KPIs and mom-type breakdown
+ */
+
+export function useAdminStats<
+  TData = Awaited<ReturnType<typeof adminStats>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminStats>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminStatsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Paginated list of captured leads
+ */
+export const getAdminListLeadsUrl = (params?: AdminListLeadsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/funnel/leads?${stringifiedParams}`
+    : `/api/admin/funnel/leads`;
+};
+
+export const adminListLeads = async (
+  params?: AdminListLeadsParams,
+  options?: RequestInit,
+): Promise<AdminListLeads200> => {
+  return customFetch<AdminListLeads200>(getAdminListLeadsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getAdminListLeadsQueryKey = (params?: AdminListLeadsParams) => {
+  return [`/api/admin/funnel/leads`, ...(params ? [params] : [])] as const;
+};
+
+export const getAdminListLeadsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminListLeads>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: AdminListLeadsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof adminListLeads>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminListLeadsQueryKey(params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof adminListLeads>>> = ({
     signal,
-  }) => adminListLeads({ signal, ...requestOptions });
+  }) => adminListLeads(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof adminListLeads>>,
@@ -952,15 +1373,18 @@ export type AdminListLeadsQueryError = ErrorType<unknown>;
 export function useAdminListLeads<
   TData = Awaited<ReturnType<typeof adminListLeads>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof adminListLeads>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getAdminListLeadsQueryOptions(options);
+>(
+  params?: AdminListLeadsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof adminListLeads>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminListLeadsQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
@@ -968,6 +1392,338 @@ export function useAdminListLeads<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Lead detail bundle (lead + quiz submission + intakes + sequences + emails + recent events)
+ */
+export const getAdminLeadDetailUrl = (id: number) => {
+  return `/api/admin/funnel/leads/${id}`;
+};
+
+export const adminLeadDetail = async (
+  id: number,
+  options?: RequestInit,
+): Promise<AdminLeadDetail> => {
+  return customFetch<AdminLeadDetail>(getAdminLeadDetailUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getAdminLeadDetailQueryKey = (id: number) => {
+  return [`/api/admin/funnel/leads/${id}`] as const;
+};
+
+export const getAdminLeadDetailQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminLeadDetail>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof adminLeadDetail>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminLeadDetailQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminLeadDetail>>> = ({
+    signal,
+  }) => adminLeadDetail(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminLeadDetail>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type AdminLeadDetailQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminLeadDetail>>
+>;
+export type AdminLeadDetailQueryError = ErrorType<void>;
+
+/**
+ * @summary Lead detail bundle (lead + quiz submission + intakes + sequences + emails + recent events)
+ */
+
+export function useAdminLeadDetail<
+  TData = Awaited<ReturnType<typeof adminLeadDetail>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof adminLeadDetail>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminLeadDetailQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Manually mark a lead as booked (halts their nurture)
+ */
+export const getAdminMarkBookedUrl = (id: number) => {
+  return `/api/admin/funnel/leads/${id}/mark-booked`;
+};
+
+export const adminMarkBooked = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Ok> => {
+  return customFetch<Ok>(getAdminMarkBookedUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getAdminMarkBookedMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminMarkBooked>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminMarkBooked>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["adminMarkBooked"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminMarkBooked>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return adminMarkBooked(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminMarkBookedMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminMarkBooked>>
+>;
+
+export type AdminMarkBookedMutationError = ErrorType<void>;
+
+/**
+ * @summary Manually mark a lead as booked (halts their nurture)
+ */
+export const useAdminMarkBooked = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminMarkBooked>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminMarkBooked>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getAdminMarkBookedMutationOptions(options));
+};
+
+/**
+ * @summary Read current funnel settings (env defaults + DB overrides)
+ */
+export const getAdminGetSettingsUrl = () => {
+  return `/api/admin/funnel/settings`;
+};
+
+export const adminGetSettings = async (
+  options?: RequestInit,
+): Promise<AdminSettings> => {
+  return customFetch<AdminSettings>(getAdminGetSettingsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getAdminGetSettingsQueryKey = () => {
+  return [`/api/admin/funnel/settings`] as const;
+};
+
+export const getAdminGetSettingsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminGetSettings>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetSettings>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminGetSettingsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminGetSettings>>
+  > = ({ signal }) => adminGetSettings({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetSettings>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type AdminGetSettingsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminGetSettings>>
+>;
+export type AdminGetSettingsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Read current funnel settings (env defaults + DB overrides)
+ */
+
+export function useAdminGetSettings<
+  TData = Awaited<ReturnType<typeof adminGetSettings>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetSettings>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminGetSettingsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Upsert one or more funnel settings; empty string deletes the override
+ */
+export const getAdminPutSettingsUrl = () => {
+  return `/api/admin/funnel/settings`;
+};
+
+export const adminPutSettings = async (
+  adminPutSettingsBody: AdminPutSettingsBody,
+  options?: RequestInit,
+): Promise<AdminPutSettings200> => {
+  return customFetch<AdminPutSettings200>(getAdminPutSettingsUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(adminPutSettingsBody),
+  });
+};
+
+export const getAdminPutSettingsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminPutSettings>>,
+    TError,
+    { data: BodyType<AdminPutSettingsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminPutSettings>>,
+  TError,
+  { data: BodyType<AdminPutSettingsBody> },
+  TContext
+> => {
+  const mutationKey = ["adminPutSettings"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminPutSettings>>,
+    { data: BodyType<AdminPutSettingsBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return adminPutSettings(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminPutSettingsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminPutSettings>>
+>;
+export type AdminPutSettingsMutationBody = BodyType<AdminPutSettingsBody>;
+export type AdminPutSettingsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Upsert one or more funnel settings; empty string deletes the override
+ */
+export const useAdminPutSettings = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminPutSettings>>,
+    TError,
+    { data: BodyType<AdminPutSettingsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminPutSettings>>,
+  TError,
+  { data: BodyType<AdminPutSettingsBody> },
+  TContext
+> => {
+  return useMutation(getAdminPutSettingsMutationOptions(options));
+};
 
 /**
  * @summary CSV export of every lead

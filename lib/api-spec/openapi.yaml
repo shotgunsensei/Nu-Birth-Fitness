@@ -55,6 +55,10 @@ paths:
       operationId: quizAnswer
       tags: [funnel]
       summary: Record a single quiz answer
+      description: |
+        `questionKey` is the stable key of the quiz question (e.g. `q1_pattern`),
+        `answerKey` is the option key the user picked (`A` | `B` | `C` | `D`),
+        and `answerType` is the mom-type slug that option scores into.
       requestBody:
         required: true
         content:
@@ -63,9 +67,10 @@ paths:
               type: object
               properties:
                 sessionId: { type: string }
-                questionId: { type: string }
-                choice: { type: string, enum: [A, B, C, D] }
-              required: [sessionId, questionId, choice]
+                questionKey: { type: string }
+                answerKey: { type: string }
+                answerType: { $ref: "#/components/schemas/ResultType" }
+              required: [sessionId, questionKey, answerKey, answerType]
       responses:
         "200":
           description: Recorded
@@ -87,14 +92,64 @@ paths:
               properties:
                 sessionId: { type: string }
                 resultType: { $ref: "#/components/schemas/ResultType" }
-                score: { type: object, additionalProperties: { type: integer } }
-              required: [sessionId, resultType]
+                scoreJson:
+                  type: object
+                  additionalProperties: { type: integer }
+                  description: Map of resultType → numeric score.
+                answersJson:
+                  type: object
+                  additionalProperties: { type: string }
+                  description: Map of questionKey → answerKey selected by the user.
+              required: [sessionId, resultType, scoreJson, answersJson]
       responses:
         "200":
           description: Saved
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Ok" }
+
+  /intake:
+    post:
+      operationId: createBookingIntake
+      tags: [funnel]
+      summary: Save the pre-call intake form a lead fills before their booking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BookingIntakeCreate" }
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+  /email/test:
+    post:
+      operationId: sendTestEmail
+      tags: [funnel]
+      summary: Render a result-day-0 template and email it (dev/owner tooling)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                to: { type: string, format: email }
+                resultType: { $ref: "#/components/schemas/ResultType" }
+              required: [to]
+      responses:
+        "200":
+          description: Mail dispatch result
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                properties:
+                  ok: { type: boolean }
 
   /leads:
     post:
@@ -241,19 +296,145 @@ paths:
         "503":
           description: Admin not configured
 
+  /admin/funnel/logout:
+    post:
+      operationId: adminLogout
+      tags: [admin]
+      summary: Clear the admin session cookie
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+  /admin/funnel/me:
+    get:
+      operationId: adminMe
+      tags: [admin]
+      summary: Whether the current cookie is a valid admin session
+      responses:
+        "200":
+          description: Auth state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  authenticated: { type: boolean }
+                  configured: { type: boolean }
+                required: [authenticated, configured]
+
+  /admin/funnel/stats:
+    get:
+      operationId: adminStats
+      tags: [admin]
+      summary: Aggregate funnel KPIs and mom-type breakdown
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminStats" }
+
   /admin/funnel/leads:
     get:
       operationId: adminListLeads
       tags: [admin]
       summary: Paginated list of captured leads
+      parameters:
+        - in: query
+          name: limit
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
       responses:
         "200":
           description: Leads
           content:
             application/json:
               schema:
-                type: array
-                items: { $ref: "#/components/schemas/Lead" }
+                type: object
+                properties:
+                  leads:
+                    type: array
+                    items: { $ref: "#/components/schemas/Lead" }
+                required: [leads]
+
+  /admin/funnel/leads/{id}:
+    get:
+      operationId: adminLeadDetail
+      tags: [admin]
+      summary: Lead detail bundle (lead + quiz submission + intakes + sequences + emails + recent events)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Lead detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminLeadDetail" }
+        "404":
+          description: Not found
+
+  /admin/funnel/leads/{id}/mark-booked:
+    post:
+      operationId: adminMarkBooked
+      tags: [admin]
+      summary: Manually mark a lead as booked (halts their nurture)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Marked
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+        "404":
+          description: Not found
+
+  /admin/funnel/settings:
+    get:
+      operationId: adminGetSettings
+      tags: [admin]
+      summary: Read current funnel settings (env defaults + DB overrides)
+      responses:
+        "200":
+          description: Settings bundle
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminSettings" }
+    put:
+      operationId: adminPutSettings
+      tags: [admin]
+      summary: Upsert one or more funnel settings; empty string deletes the override
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                settings:
+                  type: object
+                  additionalProperties: { type: string }
+              required: [settings]
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Ok"
+                  - type: object
+                    properties:
+                      count: { type: integer }
 
   /admin/funnel/export.csv:
     get:
@@ -325,3 +506,117 @@ components:
         resultVideos:
           type: object
           additionalProperties: { type: string }
+    BookingIntakeCreate:
+      type: object
+      required: [email, resultType]
+      properties:
+        email: { type: string, format: email }
+        resultType: { $ref: "#/components/schemas/ResultType" }
+        biggestStruggle: { type: string }
+        goal90Days: { type: string }
+        triedBefore: { type: string }
+        knockedOff: { type: string }
+        howSoon: { type: string }
+        openToCoaching: { type: string }
+        bestPhone: { type: string }
+        bestTime: { type: string }
+    AdminStats:
+      type: object
+      required: [totals, breakdown]
+      properties:
+        totals:
+          type: object
+          properties:
+            quizStarts: { type: integer }
+            quizCompletions: { type: integer }
+            leadsCaptured: { type: integer }
+            bookCtaClicks: { type: integer }
+            trainingClicks: { type: integer }
+            trainingViews: { type: integer }
+            intakeCompleted: { type: integer }
+            calendarOpened: { type: integer }
+            bookedCalls: { type: integer }
+            resultViewed: { type: integer }
+            conversionRate: { type: number }
+        breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              resultType: { $ref: "#/components/schemas/ResultType" }
+              count: { type: integer }
+    AdminLeadDetail:
+      type: object
+      required: [lead, events, intakes, sequences, emails]
+      properties:
+        lead: { $ref: "#/components/schemas/Lead" }
+        submission:
+          type: object
+          nullable: true
+          additionalProperties: true
+          properties:
+            id: { type: integer }
+            sessionId: { type: string }
+            resultType: { $ref: "#/components/schemas/ResultType" }
+            scoreJson:
+              type: object
+              additionalProperties: { type: integer }
+            answersJson:
+              type: object
+              additionalProperties: { type: string }
+            completedAt: { type: string, format: date-time, nullable: true }
+        events:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+            properties:
+              id: { type: integer }
+              eventName: { type: string }
+              payload: { type: object, additionalProperties: true, nullable: true }
+              createdAt: { type: string, format: date-time }
+        intakes:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        sequences:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+            properties:
+              id: { type: integer }
+              sequenceType: { type: string }
+              currentStep: { type: integer }
+              totalSteps: { type: integer }
+              status: { type: string }
+        emails:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+            properties:
+              id: { type: integer }
+              subject: { type: string }
+              status: { type: string }
+              sentAt: { type: string, format: date-time }
+    AdminSettings:
+      type: object
+      required: [overrides, effective]
+      properties:
+        overrides:
+          type: object
+          additionalProperties: { type: string }
+          description: Raw key→value overrides stored in funnel_settings.
+        effective:
+          type: object
+          properties:
+            bookingUrl: { type: string }
+            publicSiteUrl: { type: string }
+            trainingVideoUrl: { type: string }
+            ownerEmail: { type: string }
+            mailingAddress: { type: string }
+            resultVideos:
+              type: object
+              additionalProperties: { type: string }

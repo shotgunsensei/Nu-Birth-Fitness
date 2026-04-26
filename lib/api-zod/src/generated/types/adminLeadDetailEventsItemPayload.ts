@@ -6,4 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type QuizCompleteBodyScore = { [key: string]: number };
+export type AdminLeadDetailEventsItemPayload = {
+  [key: string]: unknown;
+} | null;

@@ -7,9 +7,7 @@
  */
 import type { ResultType } from "./resultType";
 
-export type QuizAnswerBody = {
-  sessionId: string;
-  questionKey: string;
-  answerKey: string;
-  answerType: ResultType;
+export type SendTestEmailBody = {
+  to: string;
+  resultType?: ResultType;
 };
