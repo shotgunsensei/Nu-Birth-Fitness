@@ -156,7 +156,7 @@ export function buildMomResetMessage(opts: {
     resultType,
     intro: `Day ${step + 1} of the 5-Day Mom Reset.`,
     body: fiveDayBody(step),
-    ctaLabel: step === 4 ? "Book My Reset Call" : "Book My Reset Call",
+    ctaLabel: "Book My Reset Call",
     unsubscribeUrl,
   });
   tpl.subject = `${title} — Day ${step + 1}`;

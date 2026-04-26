@@ -22,6 +22,7 @@ import {
   buildOwnerBookingMessage,
 } from "../lib/templates";
 import { startSequenceForLead, haltSequencesForLead } from "../lib/scheduler";
+import { requireAdmin } from "../middlewares/admin";
 import { env } from "../lib/env";
 import { logger } from "../lib/logger";
 
@@ -371,26 +372,19 @@ router.post("/webhooks/booking", async (req, res) => {
   res.json({ ok: true, matched: true });
 });
 
-// Test-mail endpoint: admin-only and refused entirely in production. Without
-// these gates an unauthenticated caller could trigger outbound mail to any
-// address through our Resend account (spam / quota burn / sender reputation).
-router.post("/email/test", async (req, res) => {
+// /email/test: admin-only smoke endpoint, refused entirely in production.
+// Returns 404 in prod so the route is invisible on the deployed surface, and
+// is admin-gated everywhere else so an unauthenticated caller cannot trigger
+// outbound mail through our Resend account (spam / quota burn / sender
+// reputation).
+const blockInProduction: import("express").RequestHandler = (_req, res, next) => {
   if (process.env.NODE_ENV === "production") {
     res.status(404).json({ error: "Not available in production" });
     return;
   }
-  const { requireAdmin } = await import("../middlewares/admin");
-  let allowed = false;
-  await new Promise<void>((resolve) => {
-    requireAdmin(req, res, () => {
-      allowed = true;
-      resolve();
-    });
-    // If requireAdmin called res.status(...).json(...) it has already responded;
-    // detect that and resolve so we don't double-send.
-    if (res.headersSent) resolve();
-  });
-  if (!allowed) return;
+  next();
+};
+router.post("/email/test", blockInProduction, requireAdmin, async (req, res) => {
   const schema = z.object({ to: z.string().email(), resultType: ResultEnum.optional() });
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) {
