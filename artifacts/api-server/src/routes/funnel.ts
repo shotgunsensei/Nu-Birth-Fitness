@@ -11,6 +11,7 @@ import {
   bookingIntakes,
   emailSequences,
   emailLogs,
+  settings as funnelSettings,
   RESULT_TYPES,
   type ResultType,
 } from "@workspace/db";
@@ -392,11 +393,21 @@ router.get("/unsubscribe", async (req, res) => {
 });
 
 router.get("/funnel/settings", async (_req, res) => {
+  // Merge env defaults with DB overrides written via PUT /admin/funnel/settings
+  // so admin-configured booking/video URLs are honored by the public funnel.
+  const rows = await db.select().from(funnelSettings);
+  const o: Record<string, string> = {};
+  for (const r of rows) o[r.key] = r.value;
   res.json({
-    bookingUrl: env.bookingUrl || null,
-    publicSiteUrl: env.publicSiteUrl || null,
-    resultVideos: env.resultVideos,
-    trainingVideoUrl: env.trainingVideoUrl || null,
+    bookingUrl: o.bookingUrl || env.bookingUrl || null,
+    publicSiteUrl: o.publicSiteUrl || env.publicSiteUrl || null,
+    resultVideos: {
+      all_or_nothing: o.resultVideo_all_or_nothing || env.resultVideos.all_or_nothing || "",
+      stuck_loop: o.resultVideo_stuck_loop || env.resultVideos.stuck_loop || "",
+      overwhelmed: o.resultVideo_overwhelmed || env.resultVideos.overwhelmed || "",
+      lost_herself: o.resultVideo_lost_herself || env.resultVideos.lost_herself || "",
+    },
+    trainingVideoUrl: o.trainingVideoUrl || env.trainingVideoUrl || null,
   });
 });
 

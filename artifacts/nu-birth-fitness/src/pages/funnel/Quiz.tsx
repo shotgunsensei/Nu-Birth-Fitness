@@ -24,6 +24,7 @@ export default function Quiz() {
 
   useEffect(() => {
     funnelApi.startQuiz(sessionId).catch(() => {});
+    track("PageView", { page: "quiz" }, { sessionId });
     track("QuizStarted", undefined, { sessionId });
     // run once per mount
     // eslint-disable-next-line react-hooks/exhaustive-deps

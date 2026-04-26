@@ -27,6 +27,7 @@ export default function Result({ params }: { params: { slug: string } }) {
       setLocation("/reset-trap-quiz");
       return;
     }
+    track("PageView", { page: "result", resultType }, { sessionId });
     track("ResultViewed", { resultType }, { sessionId });
   }, [resultType, sessionId, setLocation]);
 
