@@ -20,6 +20,15 @@ import About from "@/pages/About";
 import NotFound from "@/pages/not-found";
 
 import QuizLanding from "@/pages/funnel/QuizLanding";
+
+function QuizRedirect() {
+  const [, setLocation] = useLocation();
+  useEffect(() => {
+    setLocation("/reset-trap-quiz", { replace: true });
+  }, [setLocation]);
+  return null;
+}
+
 import Quiz from "@/pages/funnel/Quiz";
 import QuizContact from "@/pages/funnel/QuizContact";
 import Result from "@/pages/funnel/Result";
@@ -57,6 +66,9 @@ function Router() {
         <Route path="/favorites" component={Favorites} />
         <Route path="/about" component={About} />
         <Route path="/reset-trap-quiz" component={QuizLanding} />
+        <Route path="/reset" component={QuizRedirect} />
+        <Route path="/mom-quiz" component={QuizRedirect} />
+        <Route path="/start" component={QuizRedirect} />
         <Route path="/quiz" component={Quiz} />
         <Route path="/quiz/contact" component={QuizContact} />
         <Route path="/results/:slug" component={Result} />

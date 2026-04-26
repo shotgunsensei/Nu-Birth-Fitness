@@ -5,6 +5,7 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { startSchedulerLoop } from "./lib/scheduler";
+import { seedEmailMessages } from "./lib/seed";
 
 const app: Express = express();
 
@@ -43,7 +44,9 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
 
-// Kick off background scheduler for email sequences
+// Seed default nurture email templates into funnel_email_messages on first
+// boot, then kick off the scheduler for outbound sequences.
+void seedEmailMessages();
 startSchedulerLoop();
 
 export default app;

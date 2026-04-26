@@ -6,4 +6,23 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./adminLoginBody";
+export * from "./bookingWebhook200";
+export * from "./bookingWebhookBody";
+export * from "./createLead200";
+export * from "./funnelSettings";
+export * from "./funnelSettingsResultVideos";
 export * from "./healthStatus";
+export * from "./lead";
+export * from "./leadCreate";
+export * from "./leadCreateUtm";
+export * from "./ok";
+export * from "./quizAnswerBody";
+export * from "./quizAnswerBodyChoice";
+export * from "./quizCompleteBody";
+export * from "./quizCompleteBodyScore";
+export * from "./quizStartBody";
+export * from "./resultType";
+export * from "./trackEventBody";
+export * from "./trackEventBodyPayload";
+export * from "./unsubscribeParams";

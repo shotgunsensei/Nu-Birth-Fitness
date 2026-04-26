@@ -8,3 +8,120 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface Ok {
+  ok: boolean;
+}
+
+export type ResultType = (typeof ResultType)[keyof typeof ResultType];
+
+export const ResultType = {
+  all_or_nothing: "all_or_nothing",
+  stuck_loop: "stuck_loop",
+  overwhelmed: "overwhelmed",
+  lost_herself: "lost_herself",
+} as const;
+
+export type LeadCreateUtm = {
+  source?: string;
+  medium?: string;
+  campaign?: string;
+  content?: string;
+  term?: string;
+} | null;
+
+export interface LeadCreate {
+  /**
+   * @minLength 1
+   * @maxLength 80
+   */
+  firstName: string;
+  email: string;
+  phone?: string | null;
+  consent: boolean;
+  resultType: ResultType;
+  sessionId?: string | null;
+  source?: string | null;
+  referrer?: string | null;
+  deviceType?: string | null;
+  utm?: LeadCreateUtm;
+}
+
+export interface Lead {
+  id?: number;
+  firstName?: string;
+  email?: string;
+  phone?: string | null;
+  resultType?: ResultType;
+  status?: string;
+  bookedAt?: string | null;
+  unsubscribed?: boolean;
+  createdAt?: string;
+}
+
+export type FunnelSettingsResultVideos = { [key: string]: string };
+
+export interface FunnelSettings {
+  bookingUrl?: string | null;
+  publicSiteUrl?: string | null;
+  trainingVideoUrl?: string | null;
+  resultVideos?: FunnelSettingsResultVideos;
+}
+
+export type QuizStartBody = {
+  sessionId: string;
+};
+
+export type QuizAnswerBodyChoice =
+  (typeof QuizAnswerBodyChoice)[keyof typeof QuizAnswerBodyChoice];
+
+export const QuizAnswerBodyChoice = {
+  A: "A",
+  B: "B",
+  C: "C",
+  D: "D",
+} as const;
+
+export type QuizAnswerBody = {
+  sessionId: string;
+  questionId: string;
+  choice: QuizAnswerBodyChoice;
+};
+
+export type QuizCompleteBodyScore = { [key: string]: number };
+
+export type QuizCompleteBody = {
+  sessionId: string;
+  resultType: ResultType;
+  score?: QuizCompleteBodyScore;
+};
+
+export type CreateLead200 = Ok & {
+  leadId?: number;
+};
+
+export type TrackEventBodyPayload = { [key: string]: unknown };
+
+export type TrackEventBody = {
+  eventName: string;
+  payload?: TrackEventBodyPayload;
+  sessionId?: string;
+  leadId?: number;
+};
+
+export type BookingWebhookBody = {
+  email?: string;
+  [key: string]: unknown;
+};
+
+export type BookingWebhook200 = Ok & {
+  matched?: boolean;
+};
+
+export type UnsubscribeParams = {
+  token: string;
+};
+
+export type AdminLoginBody = {
+  password: string;
+};

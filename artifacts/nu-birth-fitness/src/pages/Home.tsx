@@ -74,6 +74,24 @@ export default function Home() {
             <Button
               size="lg"
               className="rounded-full"
+              onClick={() => setLocation(featuredVideo ? `/videos/${featuredVideo.id}` : "/videos")}
+              data-testid="button-home-watch-latest"
+            >
+              Watch Latest
+            </Button>
+            <Button
+              variant="secondary"
+              size="lg"
+              className="rounded-full"
+              onClick={() => setLocation("/playlists")}
+              data-testid="button-home-browse-programs"
+            >
+              Browse Programs
+            </Button>
+            <Button
+              variant="ghost"
+              size="lg"
+              className="rounded-full"
               onClick={() => {
                 track("HomeCTA_Clicked", { position: "hero" });
                 setLocation("/reset-trap-quiz");
@@ -81,14 +99,6 @@ export default function Home() {
               data-testid="button-home-quiz"
             >
               <Sparkles className="w-4 h-4" /> Take the Reset Trap Quiz
-            </Button>
-            <Button
-              variant="secondary"
-              size="lg"
-              className="rounded-full"
-              onClick={() => setLocation(featuredVideo ? `/videos/${featuredVideo.id}` : "/videos")}
-            >
-              Watch Latest
             </Button>
           </div>
         </div>

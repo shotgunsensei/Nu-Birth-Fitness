@@ -14,3 +14,172 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * @summary Begin a quiz session
+ */
+export const QuizStartBody = zod.object({
+  sessionId: zod.string(),
+});
+
+export const QuizStartResponse = zod.object({
+  ok: zod.boolean(),
+});
+
+/**
+ * @summary Record a single quiz answer
+ */
+export const QuizAnswerBody = zod.object({
+  sessionId: zod.string(),
+  questionId: zod.string(),
+  choice: zod.enum(["A", "B", "C", "D"]),
+});
+
+export const QuizAnswerResponse = zod.object({
+  ok: zod.boolean(),
+});
+
+/**
+ * @summary Finalize a quiz with computed result type
+ */
+export const QuizCompleteBody = zod.object({
+  sessionId: zod.string(),
+  resultType: zod.enum([
+    "all_or_nothing",
+    "stuck_loop",
+    "overwhelmed",
+    "lost_herself",
+  ]),
+  score: zod.record(zod.string(), zod.number()).optional(),
+});
+
+export const QuizCompleteResponse = zod.object({
+  ok: zod.boolean(),
+});
+
+/**
+ * @summary Capture a lead and kick off the email nurture
+ */
+export const createLeadBodyFirstNameMax = 80;
+
+export const CreateLeadBody = zod.object({
+  firstName: zod.string().min(1).max(createLeadBodyFirstNameMax),
+  email: zod.string().email(),
+  phone: zod.string().nullish(),
+  consent: zod.boolean(),
+  resultType: zod.enum([
+    "all_or_nothing",
+    "stuck_loop",
+    "overwhelmed",
+    "lost_herself",
+  ]),
+  sessionId: zod.string().nullish(),
+  source: zod.string().nullish(),
+  referrer: zod.string().nullish(),
+  deviceType: zod.string().nullish(),
+  utm: zod
+    .object({
+      source: zod.string().optional(),
+      medium: zod.string().optional(),
+      campaign: zod.string().optional(),
+      content: zod.string().optional(),
+      term: zod.string().optional(),
+    })
+    .nullish(),
+});
+
+export const CreateLeadResponse = zod
+  .object({
+    ok: zod.boolean(),
+  })
+  .and(
+    zod.object({
+      leadId: zod.number().optional(),
+    }),
+  );
+
+/**
+ * @summary Internal event log (mirrors GA4 / Meta Pixel)
+ */
+export const TrackEventBody = zod.object({
+  eventName: zod.string(),
+  payload: zod.record(zod.string(), zod.unknown()).optional(),
+  sessionId: zod.string().optional(),
+  leadId: zod.number().optional(),
+});
+
+export const TrackEventResponse = zod.object({
+  ok: zod.boolean(),
+});
+
+/**
+ * When `BOOKING_WEBHOOK_SECRET` is set the request must include
+`x-booking-signature: <hex HMAC-SHA256 of the raw body>`. The handler
+reads `email` (or `invitee_email`, `payload.email`, `contact.email`)
+and marks the matching lead as `booked`, halting their nurture.
+
+ * @summary Inbound booking confirmation from Calendly / Cal.com / etc.
+ */
+export const BookingWebhookHeader = zod.object({
+  "x-booking-signature": zod.string().optional(),
+});
+
+export const BookingWebhookBody = zod.object({
+  email: zod.string().email().optional(),
+});
+
+export const BookingWebhookResponse = zod
+  .object({
+    ok: zod.boolean(),
+  })
+  .and(
+    zod.object({
+      matched: zod.boolean().optional(),
+    }),
+  );
+
+/**
+ * @summary One-click unsubscribe link from nurture emails
+ */
+export const UnsubscribeQueryParams = zod.object({
+  token: zod.coerce.string(),
+});
+
+/**
+ * @summary Public funnel config (booking URL, video links, etc.)
+ */
+export const GetFunnelSettingsResponse = zod.object({
+  bookingUrl: zod.string().nullish(),
+  publicSiteUrl: zod.string().nullish(),
+  trainingVideoUrl: zod.string().nullish(),
+  resultVideos: zod.record(zod.string(), zod.string()).optional(),
+});
+
+/**
+ * @summary Exchange password for an admin session cookie
+ */
+export const AdminLoginBody = zod.object({
+  password: zod.string(),
+});
+
+export const AdminLoginResponse = zod.object({
+  ok: zod.boolean(),
+});
+
+/**
+ * @summary Paginated list of captured leads
+ */
+export const AdminListLeadsResponseItem = zod.object({
+  id: zod.number().optional(),
+  firstName: zod.string().optional(),
+  email: zod.string().optional(),
+  phone: zod.string().nullish(),
+  resultType: zod
+    .enum(["all_or_nothing", "stuck_loop", "overwhelmed", "lost_herself"])
+    .optional(),
+  status: zod.string().optional(),
+  bookedAt: zod.coerce.date().nullish(),
+  unsubscribed: zod.boolean().optional(),
+  createdAt: zod.coerce.date().optional(),
+});
+export const AdminListLeadsResponse = zod.array(AdminListLeadsResponseItem);

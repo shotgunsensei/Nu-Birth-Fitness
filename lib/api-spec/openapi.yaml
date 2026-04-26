@@ -10,6 +10,10 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: funnel
+    description: Reset Trap Quiz funnel — quiz, lead capture, events, booking
+  - name: admin
+    description: Funnel admin dashboard endpoints (cookie-gated)
 paths:
   /healthz:
     get:
@@ -24,13 +28,300 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /quiz/start:
+    post:
+      operationId: quizStart
+      tags: [funnel]
+      summary: Begin a quiz session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sessionId: { type: string }
+              required: [sessionId]
+      responses:
+        "200":
+          description: Started
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+  /quiz/answer:
+    post:
+      operationId: quizAnswer
+      tags: [funnel]
+      summary: Record a single quiz answer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sessionId: { type: string }
+                questionId: { type: string }
+                choice: { type: string, enum: [A, B, C, D] }
+              required: [sessionId, questionId, choice]
+      responses:
+        "200":
+          description: Recorded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+  /quiz/complete:
+    post:
+      operationId: quizComplete
+      tags: [funnel]
+      summary: Finalize a quiz with computed result type
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sessionId: { type: string }
+                resultType: { $ref: "#/components/schemas/ResultType" }
+                score: { type: object, additionalProperties: { type: integer } }
+              required: [sessionId, resultType]
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+  /leads:
+    post:
+      operationId: createLead
+      tags: [funnel]
+      summary: Capture a lead and kick off the email nurture
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LeadCreate" }
+      responses:
+        "200":
+          description: Lead created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Ok"
+                  - type: object
+                    properties:
+                      leadId: { type: integer }
+
+  /events:
+    post:
+      operationId: trackEvent
+      tags: [funnel]
+      summary: Internal event log (mirrors GA4 / Meta Pixel)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                eventName: { type: string }
+                payload: { type: object, additionalProperties: true }
+                sessionId: { type: string }
+                leadId: { type: integer }
+              required: [eventName]
+      responses:
+        "200":
+          description: Logged
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+  /webhooks/booking:
+    post:
+      operationId: bookingWebhook
+      tags: [funnel]
+      summary: Inbound booking confirmation from Calendly / Cal.com / etc.
+      description: |
+        When `BOOKING_WEBHOOK_SECRET` is set the request must include
+        `x-booking-signature: <hex HMAC-SHA256 of the raw body>`. The handler
+        reads `email` (or `invitee_email`, `payload.email`, `contact.email`)
+        and marks the matching lead as `booked`, halting their nurture.
+      parameters:
+        - in: header
+          name: x-booking-signature
+          schema: { type: string }
+          required: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "200":
+          description: Matched and halted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Ok"
+                  - type: object
+                    properties:
+                      matched: { type: boolean }
+        "202":
+          description: Accepted but no lead found
+        "401":
+          description: Bad signature
+
+  /unsubscribe:
+    get:
+      operationId: unsubscribe
+      tags: [funnel]
+      summary: One-click unsubscribe link from nurture emails
+      parameters:
+        - in: query
+          name: token
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Unsubscribed
+          content:
+            text/html:
+              schema: { type: string }
+        "404":
+          description: Token not recognized
+          content:
+            text/html:
+              schema: { type: string }
+
+  /funnel/settings:
+    get:
+      operationId: getFunnelSettings
+      tags: [funnel]
+      summary: Public funnel config (booking URL, video links, etc.)
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FunnelSettings" }
+
+  /admin/funnel/login:
+    post:
+      operationId: adminLogin
+      tags: [admin]
+      summary: Exchange password for an admin session cookie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password: { type: string }
+              required: [password]
+      responses:
+        "200":
+          description: Authenticated; sets the admin session cookie
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+        "401":
+          description: Invalid password
+        "503":
+          description: Admin not configured
+
+  /admin/funnel/leads:
+    get:
+      operationId: adminListLeads
+      tags: [admin]
+      summary: Paginated list of captured leads
+      responses:
+        "200":
+          description: Leads
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Lead" }
+
+  /admin/funnel/export.csv:
+    get:
+      operationId: adminExportCsv
+      tags: [admin]
+      summary: CSV export of every lead
+      responses:
+        "200":
+          description: CSV text
+          content:
+            text/csv:
+              schema: { type: string }
+
 components:
   schemas:
     HealthStatus:
       type: object
       properties:
-        status:
-          type: string
-      required:
-        - status
-
+        status: { type: string }
+      required: [status]
+    Ok:
+      type: object
+      properties:
+        ok: { type: boolean }
+      required: [ok]
+    ResultType:
+      type: string
+      enum: [all_or_nothing, stuck_loop, overwhelmed, lost_herself]
+    LeadCreate:
+      type: object
+      required: [firstName, email, consent, resultType]
+      properties:
+        firstName: { type: string, minLength: 1, maxLength: 80 }
+        email: { type: string, format: email }
+        phone: { type: string, nullable: true }
+        consent: { type: boolean }
+        resultType: { $ref: "#/components/schemas/ResultType" }
+        sessionId: { type: string, nullable: true }
+        source: { type: string, nullable: true }
+        referrer: { type: string, nullable: true }
+        deviceType: { type: string, nullable: true }
+        utm:
+          type: object
+          nullable: true
+          properties:
+            source: { type: string }
+            medium: { type: string }
+            campaign: { type: string }
+            content: { type: string }
+            term: { type: string }
+    Lead:
+      type: object
+      properties:
+        id: { type: integer }
+        firstName: { type: string }
+        email: { type: string }
+        phone: { type: string, nullable: true }
+        resultType: { $ref: "#/components/schemas/ResultType" }
+        status: { type: string }
+        bookedAt: { type: string, format: date-time, nullable: true }
+        unsubscribed: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    FunnelSettings:
+      type: object
+      properties:
+        bookingUrl: { type: string, nullable: true }
+        publicSiteUrl: { type: string, nullable: true }
+        trainingVideoUrl: { type: string, nullable: true }
+        resultVideos:
+          type: object
+          additionalProperties: { type: string }

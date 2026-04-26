@@ -5,18 +5,36 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  AdminLoginBody,
+  BookingWebhook200,
+  BookingWebhookBody,
+  CreateLead200,
+  FunnelSettings,
+  HealthStatus,
+  Lead,
+  LeadCreate,
+  Ok,
+  QuizAnswerBody,
+  QuizCompleteBody,
+  QuizStartBody,
+  TrackEventBody,
+  UnsubscribeParams,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -92,6 +110,932 @@ export function useHealthCheck<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Begin a quiz session
+ */
+export const getQuizStartUrl = () => {
+  return `/api/quiz/start`;
+};
+
+export const quizStart = async (
+  quizStartBody: QuizStartBody,
+  options?: RequestInit,
+): Promise<Ok> => {
+  return customFetch<Ok>(getQuizStartUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(quizStartBody),
+  });
+};
+
+export const getQuizStartMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof quizStart>>,
+    TError,
+    { data: BodyType<QuizStartBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof quizStart>>,
+  TError,
+  { data: BodyType<QuizStartBody> },
+  TContext
+> => {
+  const mutationKey = ["quizStart"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof quizStart>>,
+    { data: BodyType<QuizStartBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return quizStart(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type QuizStartMutationResult = NonNullable<
+  Awaited<ReturnType<typeof quizStart>>
+>;
+export type QuizStartMutationBody = BodyType<QuizStartBody>;
+export type QuizStartMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Begin a quiz session
+ */
+export const useQuizStart = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof quizStart>>,
+    TError,
+    { data: BodyType<QuizStartBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof quizStart>>,
+  TError,
+  { data: BodyType<QuizStartBody> },
+  TContext
+> => {
+  return useMutation(getQuizStartMutationOptions(options));
+};
+
+/**
+ * @summary Record a single quiz answer
+ */
+export const getQuizAnswerUrl = () => {
+  return `/api/quiz/answer`;
+};
+
+export const quizAnswer = async (
+  quizAnswerBody: QuizAnswerBody,
+  options?: RequestInit,
+): Promise<Ok> => {
+  return customFetch<Ok>(getQuizAnswerUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(quizAnswerBody),
+  });
+};
+
+export const getQuizAnswerMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof quizAnswer>>,
+    TError,
+    { data: BodyType<QuizAnswerBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof quizAnswer>>,
+  TError,
+  { data: BodyType<QuizAnswerBody> },
+  TContext
+> => {
+  const mutationKey = ["quizAnswer"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof quizAnswer>>,
+    { data: BodyType<QuizAnswerBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return quizAnswer(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type QuizAnswerMutationResult = NonNullable<
+  Awaited<ReturnType<typeof quizAnswer>>
+>;
+export type QuizAnswerMutationBody = BodyType<QuizAnswerBody>;
+export type QuizAnswerMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Record a single quiz answer
+ */
+export const useQuizAnswer = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof quizAnswer>>,
+    TError,
+    { data: BodyType<QuizAnswerBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof quizAnswer>>,
+  TError,
+  { data: BodyType<QuizAnswerBody> },
+  TContext
+> => {
+  return useMutation(getQuizAnswerMutationOptions(options));
+};
+
+/**
+ * @summary Finalize a quiz with computed result type
+ */
+export const getQuizCompleteUrl = () => {
+  return `/api/quiz/complete`;
+};
+
+export const quizComplete = async (
+  quizCompleteBody: QuizCompleteBody,
+  options?: RequestInit,
+): Promise<Ok> => {
+  return customFetch<Ok>(getQuizCompleteUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(quizCompleteBody),
+  });
+};
+
+export const getQuizCompleteMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof quizComplete>>,
+    TError,
+    { data: BodyType<QuizCompleteBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof quizComplete>>,
+  TError,
+  { data: BodyType<QuizCompleteBody> },
+  TContext
+> => {
+  const mutationKey = ["quizComplete"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof quizComplete>>,
+    { data: BodyType<QuizCompleteBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return quizComplete(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type QuizCompleteMutationResult = NonNullable<
+  Awaited<ReturnType<typeof quizComplete>>
+>;
+export type QuizCompleteMutationBody = BodyType<QuizCompleteBody>;
+export type QuizCompleteMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Finalize a quiz with computed result type
+ */
+export const useQuizComplete = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof quizComplete>>,
+    TError,
+    { data: BodyType<QuizCompleteBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof quizComplete>>,
+  TError,
+  { data: BodyType<QuizCompleteBody> },
+  TContext
+> => {
+  return useMutation(getQuizCompleteMutationOptions(options));
+};
+
+/**
+ * @summary Capture a lead and kick off the email nurture
+ */
+export const getCreateLeadUrl = () => {
+  return `/api/leads`;
+};
+
+export const createLead = async (
+  leadCreate: LeadCreate,
+  options?: RequestInit,
+): Promise<CreateLead200> => {
+  return customFetch<CreateLead200>(getCreateLeadUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(leadCreate),
+  });
+};
+
+export const getCreateLeadMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createLead>>,
+    TError,
+    { data: BodyType<LeadCreate> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createLead>>,
+  TError,
+  { data: BodyType<LeadCreate> },
+  TContext
+> => {
+  const mutationKey = ["createLead"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createLead>>,
+    { data: BodyType<LeadCreate> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createLead(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateLeadMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createLead>>
+>;
+export type CreateLeadMutationBody = BodyType<LeadCreate>;
+export type CreateLeadMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Capture a lead and kick off the email nurture
+ */
+export const useCreateLead = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createLead>>,
+    TError,
+    { data: BodyType<LeadCreate> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createLead>>,
+  TError,
+  { data: BodyType<LeadCreate> },
+  TContext
+> => {
+  return useMutation(getCreateLeadMutationOptions(options));
+};
+
+/**
+ * @summary Internal event log (mirrors GA4 / Meta Pixel)
+ */
+export const getTrackEventUrl = () => {
+  return `/api/events`;
+};
+
+export const trackEvent = async (
+  trackEventBody: TrackEventBody,
+  options?: RequestInit,
+): Promise<Ok> => {
+  return customFetch<Ok>(getTrackEventUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(trackEventBody),
+  });
+};
+
+export const getTrackEventMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof trackEvent>>,
+    TError,
+    { data: BodyType<TrackEventBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof trackEvent>>,
+  TError,
+  { data: BodyType<TrackEventBody> },
+  TContext
+> => {
+  const mutationKey = ["trackEvent"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof trackEvent>>,
+    { data: BodyType<TrackEventBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return trackEvent(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type TrackEventMutationResult = NonNullable<
+  Awaited<ReturnType<typeof trackEvent>>
+>;
+export type TrackEventMutationBody = BodyType<TrackEventBody>;
+export type TrackEventMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Internal event log (mirrors GA4 / Meta Pixel)
+ */
+export const useTrackEvent = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof trackEvent>>,
+    TError,
+    { data: BodyType<TrackEventBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof trackEvent>>,
+  TError,
+  { data: BodyType<TrackEventBody> },
+  TContext
+> => {
+  return useMutation(getTrackEventMutationOptions(options));
+};
+
+/**
+ * When `BOOKING_WEBHOOK_SECRET` is set the request must include
+`x-booking-signature: <hex HMAC-SHA256 of the raw body>`. The handler
+reads `email` (or `invitee_email`, `payload.email`, `contact.email`)
+and marks the matching lead as `booked`, halting their nurture.
+
+ * @summary Inbound booking confirmation from Calendly / Cal.com / etc.
+ */
+export const getBookingWebhookUrl = () => {
+  return `/api/webhooks/booking`;
+};
+
+export const bookingWebhook = async (
+  bookingWebhookBody: BookingWebhookBody,
+  options?: RequestInit,
+): Promise<BookingWebhook200 | void> => {
+  return customFetch<BookingWebhook200 | void>(getBookingWebhookUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(bookingWebhookBody),
+  });
+};
+
+export const getBookingWebhookMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof bookingWebhook>>,
+    TError,
+    { data: BodyType<BookingWebhookBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof bookingWebhook>>,
+  TError,
+  { data: BodyType<BookingWebhookBody> },
+  TContext
+> => {
+  const mutationKey = ["bookingWebhook"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof bookingWebhook>>,
+    { data: BodyType<BookingWebhookBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return bookingWebhook(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type BookingWebhookMutationResult = NonNullable<
+  Awaited<ReturnType<typeof bookingWebhook>>
+>;
+export type BookingWebhookMutationBody = BodyType<BookingWebhookBody>;
+export type BookingWebhookMutationError = ErrorType<void>;
+
+/**
+ * @summary Inbound booking confirmation from Calendly / Cal.com / etc.
+ */
+export const useBookingWebhook = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof bookingWebhook>>,
+    TError,
+    { data: BodyType<BookingWebhookBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof bookingWebhook>>,
+  TError,
+  { data: BodyType<BookingWebhookBody> },
+  TContext
+> => {
+  return useMutation(getBookingWebhookMutationOptions(options));
+};
+
+/**
+ * @summary One-click unsubscribe link from nurture emails
+ */
+export const getUnsubscribeUrl = (params: UnsubscribeParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/unsubscribe?${stringifiedParams}`
+    : `/api/unsubscribe`;
+};
+
+export const unsubscribe = async (
+  params: UnsubscribeParams,
+  options?: RequestInit,
+): Promise<string> => {
+  return customFetch<string>(getUnsubscribeUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getUnsubscribeQueryKey = (params?: UnsubscribeParams) => {
+  return [`/api/unsubscribe`, ...(params ? [params] : [])] as const;
+};
+
+export const getUnsubscribeQueryOptions = <
+  TData = Awaited<ReturnType<typeof unsubscribe>>,
+  TError = ErrorType<string>,
+>(
+  params: UnsubscribeParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof unsubscribe>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getUnsubscribeQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof unsubscribe>>> = ({
+    signal,
+  }) => unsubscribe(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof unsubscribe>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type UnsubscribeQueryResult = NonNullable<
+  Awaited<ReturnType<typeof unsubscribe>>
+>;
+export type UnsubscribeQueryError = ErrorType<string>;
+
+/**
+ * @summary One-click unsubscribe link from nurture emails
+ */
+
+export function useUnsubscribe<
+  TData = Awaited<ReturnType<typeof unsubscribe>>,
+  TError = ErrorType<string>,
+>(
+  params: UnsubscribeParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof unsubscribe>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getUnsubscribeQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Public funnel config (booking URL, video links, etc.)
+ */
+export const getGetFunnelSettingsUrl = () => {
+  return `/api/funnel/settings`;
+};
+
+export const getFunnelSettings = async (
+  options?: RequestInit,
+): Promise<FunnelSettings> => {
+  return customFetch<FunnelSettings>(getGetFunnelSettingsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetFunnelSettingsQueryKey = () => {
+  return [`/api/funnel/settings`] as const;
+};
+
+export const getGetFunnelSettingsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getFunnelSettings>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getFunnelSettings>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetFunnelSettingsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getFunnelSettings>>
+  > = ({ signal }) => getFunnelSettings({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getFunnelSettings>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetFunnelSettingsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getFunnelSettings>>
+>;
+export type GetFunnelSettingsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Public funnel config (booking URL, video links, etc.)
+ */
+
+export function useGetFunnelSettings<
+  TData = Awaited<ReturnType<typeof getFunnelSettings>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getFunnelSettings>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetFunnelSettingsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Exchange password for an admin session cookie
+ */
+export const getAdminLoginUrl = () => {
+  return `/api/admin/funnel/login`;
+};
+
+export const adminLogin = async (
+  adminLoginBody: AdminLoginBody,
+  options?: RequestInit,
+): Promise<Ok> => {
+  return customFetch<Ok>(getAdminLoginUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(adminLoginBody),
+  });
+};
+
+export const getAdminLoginMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminLogin>>,
+    TError,
+    { data: BodyType<AdminLoginBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminLogin>>,
+  TError,
+  { data: BodyType<AdminLoginBody> },
+  TContext
+> => {
+  const mutationKey = ["adminLogin"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminLogin>>,
+    { data: BodyType<AdminLoginBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return adminLogin(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminLoginMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminLogin>>
+>;
+export type AdminLoginMutationBody = BodyType<AdminLoginBody>;
+export type AdminLoginMutationError = ErrorType<void>;
+
+/**
+ * @summary Exchange password for an admin session cookie
+ */
+export const useAdminLogin = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminLogin>>,
+    TError,
+    { data: BodyType<AdminLoginBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminLogin>>,
+  TError,
+  { data: BodyType<AdminLoginBody> },
+  TContext
+> => {
+  return useMutation(getAdminLoginMutationOptions(options));
+};
+
+/**
+ * @summary Paginated list of captured leads
+ */
+export const getAdminListLeadsUrl = () => {
+  return `/api/admin/funnel/leads`;
+};
+
+export const adminListLeads = async (
+  options?: RequestInit,
+): Promise<Lead[]> => {
+  return customFetch<Lead[]>(getAdminListLeadsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getAdminListLeadsQueryKey = () => {
+  return [`/api/admin/funnel/leads`] as const;
+};
+
+export const getAdminListLeadsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminListLeads>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminListLeads>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminListLeadsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminListLeads>>> = ({
+    signal,
+  }) => adminListLeads({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminListLeads>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type AdminListLeadsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminListLeads>>
+>;
+export type AdminListLeadsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Paginated list of captured leads
+ */
+
+export function useAdminListLeads<
+  TData = Awaited<ReturnType<typeof adminListLeads>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminListLeads>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminListLeadsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary CSV export of every lead
+ */
+export const getAdminExportCsvUrl = () => {
+  return `/api/admin/funnel/export.csv`;
+};
+
+export const adminExportCsv = async (
+  options?: RequestInit,
+): Promise<string> => {
+  return customFetch<string>(getAdminExportCsvUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getAdminExportCsvQueryKey = () => {
+  return [`/api/admin/funnel/export.csv`] as const;
+};
+
+export const getAdminExportCsvQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminExportCsv>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminExportCsv>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminExportCsvQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminExportCsv>>> = ({
+    signal,
+  }) => adminExportCsv({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminExportCsv>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type AdminExportCsvQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminExportCsv>>
+>;
+export type AdminExportCsvQueryError = ErrorType<unknown>;
+
+/**
+ * @summary CSV export of every lead
+ */
+
+export function useAdminExportCsv<
+  TData = Awaited<ReturnType<typeof adminExportCsv>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminExportCsv>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminExportCsvQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

@@ -63,10 +63,33 @@ export default function Booking({ params }: { params: { slug: string } }) {
     setSubmitted(true);
   }
 
+  function buildCalendarUrl(base: string): string {
+    // Preserve lead context into the calendar handoff so the provider
+    // (Calendly / Cal.com / Acuity) can prefill name + email and we keep
+    // the result type for downstream attribution.
+    try {
+      const u = new URL(base);
+      if (firstName) u.searchParams.set("name", firstName);
+      if (email) {
+        u.searchParams.set("email", email);
+        u.searchParams.set("a1", email);
+      }
+      if (resultType) {
+        u.searchParams.set("a2", resultType);
+        u.searchParams.set("utm_content", resultType);
+      }
+      u.searchParams.set("utm_source", "reset-trap-quiz");
+      u.searchParams.set("utm_medium", "result");
+      return u.toString();
+    } catch {
+      return base;
+    }
+  }
+
   function openCalendar() {
     const url = settings?.bookingUrl;
-    track("CalendarOpened", { resultType }, { sessionId });
-    if (url) window.open(url, "_blank", "noopener");
+    track("CalendarOpened", { resultType, email: !!email }, { sessionId });
+    if (url) window.open(buildCalendarUrl(url), "_blank", "noopener");
   }
 
   return (
@@ -166,10 +189,10 @@ export default function Booking({ params }: { params: { slug: string } }) {
             {settings?.bookingUrl ? (
               <>
                 <iframe
-                  src={settings.bookingUrl}
+                  src={buildCalendarUrl(settings.bookingUrl)}
                   title="Booking calendar"
                   className="w-full h-[640px] rounded-xl border border-border bg-background"
-                  onLoad={() => track("CalendarOpened", { resultType }, { sessionId })}
+                  onLoad={() => track("CalendarOpened", { resultType, email: !!email }, { sessionId })}
                 />
                 <div className="mt-4">
                   <Button
