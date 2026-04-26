@@ -36,10 +36,23 @@ End-to-end flow: **9-question quiz → 4 mom types → lead capture → result p
 - Email templates are seeded from code into `funnel_email_messages` on first boot. The scheduler renders from those DB rows (with code-template fallback) so the owner can edit copy without a code change.
 - Tracking: GA4, Meta Pixel, and an internal `funnel_lead_events` log all receive each event (`PageView`, `QuizStarted`, `QuizCompleted`, `LeadCaptured`, `ResultViewed`, `BookCTA_Clicked`, `BookedCall`, `TrainingClicked`, `TrainingViewed`, `IntakeCompleted`, `CalendarOpened`, `HomeCTA_Clicked`).
 - Admin dashboard at `/admin/funnel` is gated by the `ADMIN_PASSWORD` env var (returns "Admin not configured" until set). Surfaces totals, per-type breakdowns, lead detail with quiz answers + tags + intakes + emails, mark-booked, CSV export, and editable settings (booking URL, training video URL, per-result video URLs, etc.).
-- Booking webhook (`POST /api/funnel/booking-webhook`) verifies HMAC-SHA256 signatures from `BOOKING_WEBHOOK_SECRET` (fail-closed in production) and marks the matching lead booked, halting the nurture sequence.
+- Booking webhook (`POST /api/webhooks/booking`) verifies HMAC-SHA256 signatures from `BOOKING_WEBHOOK_SECRET` (fail-closed in production) and marks the matching lead booked, halting the nurture sequence.
 - Unsubscribe is CAN-SPAM compliant via signed tokens at `/api/unsubscribe?token=…`.
 
 See `FUNNEL_NOTES.md` for the full operator handoff (env vars, copy edits, calendar provider setup, deliverability checklist).
+
+### Admin metrics — source of truth
+
+The `/admin/funnel` dashboard is intentionally a mix of two data sources, depending on which is more authoritative:
+
+| KPI | Source |
+|---|---|
+| Booked Calls | `funnel_leads.status = 'booked'` (lead-state) — the webhook / admin "Mark Booked" updates this directly. |
+| Quiz Starts, Quiz Completions, Leads Captured, Book CTA Clicks, Training Clicks, Training Views, Intake Completed, Calendar Opened, Result Viewed | `funnel_lead_events` row counts grouped by `event_name` (event-stream). |
+| Conversion | `bookedCalls / leadsCaptured`. |
+| Per-type breakdown | `funnel_leads` grouped by `result_type`. |
+
+Event-derived counters reflect every fire (including duplicates from re-renders); booked-call counters reflect distinct leads. Treat them accordingly when reading the dashboard.
 
 ## Database
 
